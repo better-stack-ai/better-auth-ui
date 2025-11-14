@@ -54,7 +54,7 @@ export const authClientPlugin = (
     defineClientPlugin({
         name: "auth",
         routes: () => ({
-            signIn: createRoute(`/${authViewPaths.SIGN_IN}`, () => {
+            signIn: createRoute(`/auth/${authViewPaths.SIGN_IN}`, () => {
                 const AuthView = lazy(() =>
                     import("./components/auth/auth-view").then((m) => ({
                         default: m.AuthView
@@ -65,13 +65,13 @@ export const authClientPlugin = (
                     PageComponent: AuthView,
                     meta: createAuthMeta(
                         config,
-                        `/${authViewPaths.SIGN_IN}`,
+                        `/auth/${authViewPaths.SIGN_IN}`,
                         "Sign In",
                         "Sign in to your account"
                     )
                 }
             }),
-            signUp: createRoute(`/${authViewPaths.SIGN_UP}`, () => {
+            signUp: createRoute(`/auth/${authViewPaths.SIGN_UP}`, () => {
                 const AuthView = lazy(() =>
                     import("./components/auth/auth-view").then((m) => ({
                         default: m.AuthView
@@ -82,14 +82,14 @@ export const authClientPlugin = (
                     PageComponent: AuthView,
                     meta: createAuthMeta(
                         config,
-                        `/${authViewPaths.SIGN_UP}`,
+                        `/auth/${authViewPaths.SIGN_UP}`,
                         "Sign Up",
                         "Create a new account"
                     )
                 }
             }),
             forgotPassword: createRoute(
-                `/${authViewPaths.FORGOT_PASSWORD}`,
+                `/auth/${authViewPaths.FORGOT_PASSWORD}`,
                 () => {
                     const AuthView = lazy(() =>
                         import("./components/auth/auth-view").then((m) => ({
@@ -101,7 +101,7 @@ export const authClientPlugin = (
                         PageComponent: AuthView,
                         meta: createAuthMeta(
                             config,
-                            `/${authViewPaths.FORGOT_PASSWORD}`,
+                            `/auth/${authViewPaths.FORGOT_PASSWORD}`,
                             "Forgot Password",
                             "Reset your password"
                         )
@@ -109,7 +109,7 @@ export const authClientPlugin = (
                 }
             ),
             resetPassword: createRoute(
-                `/${authViewPaths.RESET_PASSWORD}`,
+                `/auth/${authViewPaths.RESET_PASSWORD}`,
                 () => {
                     const AuthView = lazy(() =>
                         import("./components/auth/auth-view").then((m) => ({
@@ -121,14 +121,14 @@ export const authClientPlugin = (
                         PageComponent: AuthView,
                         meta: createAuthMeta(
                             config,
-                            `/${authViewPaths.RESET_PASSWORD}`,
+                            `/auth/${authViewPaths.RESET_PASSWORD}`,
                             "Reset Password",
                             "Enter your new password"
                         )
                     }
                 }
             ),
-            magicLink: createRoute(`/${authViewPaths.MAGIC_LINK}`, () => {
+            magicLink: createRoute(`/auth/${authViewPaths.MAGIC_LINK}`, () => {
                 const AuthView = lazy(() =>
                     import("./components/auth/auth-view").then((m) => ({
                         default: m.AuthView
@@ -139,13 +139,13 @@ export const authClientPlugin = (
                     PageComponent: AuthView,
                     meta: createAuthMeta(
                         config,
-                        `/${authViewPaths.MAGIC_LINK}`,
+                        `/auth/${authViewPaths.MAGIC_LINK}`,
                         "Magic Link",
                         "Sign in with magic link"
                     )
                 }
             }),
-            emailOtp: createRoute(`/${authViewPaths.EMAIL_OTP}`, () => {
+            emailOtp: createRoute(`/auth/${authViewPaths.EMAIL_OTP}`, () => {
                 const AuthView = lazy(() =>
                     import("./components/auth/auth-view").then((m) => ({
                         default: m.AuthView
@@ -156,13 +156,13 @@ export const authClientPlugin = (
                     PageComponent: AuthView,
                     meta: createAuthMeta(
                         config,
-                        `/${authViewPaths.EMAIL_OTP}`,
+                        `/auth/${authViewPaths.EMAIL_OTP}`,
                         "Email Code",
                         "Sign in with email code"
                     )
                 }
             }),
-            twoFactor: createRoute(`/${authViewPaths.TWO_FACTOR}`, () => {
+            twoFactor: createRoute(`/auth/${authViewPaths.TWO_FACTOR}`, () => {
                 const AuthView = lazy(() =>
                     import("./components/auth/auth-view").then((m) => ({
                         default: m.AuthView
@@ -173,14 +173,14 @@ export const authClientPlugin = (
                     PageComponent: AuthView,
                     meta: createAuthMeta(
                         config,
-                        `/${authViewPaths.TWO_FACTOR}`,
+                        `/auth/${authViewPaths.TWO_FACTOR}`,
                         "Two-Factor Authentication",
                         "Enter your verification code"
                     )
                 }
             }),
             recoverAccount: createRoute(
-                `/${authViewPaths.RECOVER_ACCOUNT}`,
+                `/auth/${authViewPaths.RECOVER_ACCOUNT}`,
                 () => {
                     const AuthView = lazy(() =>
                         import("./components/auth/auth-view").then((m) => ({
@@ -192,14 +192,14 @@ export const authClientPlugin = (
                         PageComponent: AuthView,
                         meta: createAuthMeta(
                             config,
-                            `/${authViewPaths.RECOVER_ACCOUNT}`,
+                            `/auth/${authViewPaths.RECOVER_ACCOUNT}`,
                             "Recover Account",
                             "Recover your account with a backup code"
                         )
                     }
                 }
             ),
-            callback: createRoute(`/${authViewPaths.CALLBACK}`, () => {
+            callback: createRoute(`/auth/${authViewPaths.CALLBACK}`, () => {
                 const AuthCallback = lazy(() =>
                     import("./components/auth/auth-callback").then((m) => ({
                         default: m.AuthCallback
@@ -210,7 +210,7 @@ export const authClientPlugin = (
                     PageComponent: AuthCallback
                 }
             }),
-            signOut: createRoute(`/${authViewPaths.SIGN_OUT}`, () => {
+            signOut: createRoute(`/auth/${authViewPaths.SIGN_OUT}`, () => {
                 const SignOut = lazy(() =>
                     import("./components/auth/sign-out").then((m) => ({
                         default: m.SignOut
@@ -222,7 +222,7 @@ export const authClientPlugin = (
                 }
             }),
             acceptInvitation: createRoute(
-                `/${authViewPaths.ACCEPT_INVITATION}`,
+                `/auth/${authViewPaths.ACCEPT_INVITATION}`,
                 () => {
                     const AcceptInvitationCard = lazy(() =>
                         import(
@@ -237,157 +237,6 @@ export const authClientPlugin = (
                     }
                 }
             ),
-            // Account views
-            accountSettings: createRoute(
-                `/${accountViewPaths.SETTINGS}`,
-                () => {
-                    const AccountView = lazy(() =>
-                        import("./components/account/account-view").then(
-                            (m) => ({
-                                default: m.AccountView
-                            })
-                        )
-                    )
-
-                    return {
-                        PageComponent: AccountView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${accountViewPaths.SETTINGS}`,
-                            "Account Settings",
-                            "Manage your account settings"
-                        )
-                    }
-                }
-            ),
-            accountSecurity: createRoute(
-                `/${accountViewPaths.SECURITY}`,
-                () => {
-                    const AccountView = lazy(() =>
-                        import("./components/account/account-view").then(
-                            (m) => ({
-                                default: m.AccountView
-                            })
-                        )
-                    )
-
-                    return {
-                        PageComponent: AccountView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${accountViewPaths.SECURITY}`,
-                            "Security",
-                            "Manage your security settings"
-                        )
-                    }
-                }
-            ),
-            accountApiKeys: createRoute(`/${accountViewPaths.API_KEYS}`, () => {
-                const AccountView = lazy(() =>
-                    import("./components/account/account-view").then((m) => ({
-                        default: m.AccountView
-                    }))
-                )
-
-                return {
-                    PageComponent: AccountView,
-                    meta: createAuthMeta(
-                        config,
-                        `/${accountViewPaths.API_KEYS}`,
-                        "API Keys",
-                        "Manage your API keys"
-                    )
-                }
-            }),
-            accountOrganizations: createRoute(
-                `/${accountViewPaths.ORGANIZATIONS}`,
-                () => {
-                    const AccountView = lazy(() =>
-                        import("./components/account/account-view").then(
-                            (m) => ({
-                                default: m.AccountView
-                            })
-                        )
-                    )
-
-                    return {
-                        PageComponent: AccountView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${accountViewPaths.ORGANIZATIONS}`,
-                            "Organizations",
-                            "Manage your organizations"
-                        )
-                    }
-                }
-            ),
-            // Organization views
-            organizationSettings: createRoute(
-                `/${organizationViewPaths.SETTINGS}`,
-                () => {
-                    const OrganizationView = lazy(() =>
-                        import(
-                            "./components/organization/organization-view"
-                        ).then((m) => ({
-                            default: m.OrganizationView
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${organizationViewPaths.SETTINGS}`,
-                            "Organization Settings",
-                            "Manage your organization settings"
-                        )
-                    }
-                }
-            ),
-            organizationMembers: createRoute(
-                `/${organizationViewPaths.MEMBERS}`,
-                () => {
-                    const OrganizationView = lazy(() =>
-                        import(
-                            "./components/organization/organization-view"
-                        ).then((m) => ({
-                            default: m.OrganizationView
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${organizationViewPaths.MEMBERS}`,
-                            "Organization Members",
-                            "Manage organization members"
-                        )
-                    }
-                }
-            ),
-            organizationApiKeys: createRoute(
-                `/${organizationViewPaths.API_KEYS}`,
-                () => {
-                    const OrganizationView = lazy(() =>
-                        import(
-                            "./components/organization/organization-view"
-                        ).then((m) => ({
-                            default: m.OrganizationView
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationView,
-                        meta: createAuthMeta(
-                            config,
-                            `/${organizationViewPaths.API_KEYS}`,
-                            "Organization API Keys",
-                            "Manage organization API keys"
-                        )
-                    }
-                }
-            )
         }),
         sitemap: async () => {
             // Only include public-facing auth pages in sitemap
@@ -426,7 +275,7 @@ export const accountClientPlugin = (
             
             // Account views
             accountSettings: createRoute(
-                `/${accountViewPaths.SETTINGS}`,
+                `/account/${accountViewPaths.SETTINGS}`,
                 () => {
                     const AccountView = lazy(() =>
                         import("./components/account/account-view").then(
@@ -440,7 +289,7 @@ export const accountClientPlugin = (
                         PageComponent: AccountView,
                         meta: createAuthMeta(
                             config,
-                            `/${accountViewPaths.SETTINGS}`,
+                            `/account/${accountViewPaths.SETTINGS}`,
                             "Account Settings",
                             "Manage your account settings"
                         )
@@ -448,7 +297,7 @@ export const accountClientPlugin = (
                 }
             ),
             accountSecurity: createRoute(
-                `/${accountViewPaths.SECURITY}`,
+                `/account/${accountViewPaths.SECURITY}`,
                 () => {
                     const AccountView = lazy(() =>
                         import("./components/account/account-view").then(
@@ -462,14 +311,14 @@ export const accountClientPlugin = (
                         PageComponent: AccountView,
                         meta: createAuthMeta(
                             config,
-                            `/${accountViewPaths.SECURITY}`,
+                            `/account/${accountViewPaths.SECURITY}`,
                             "Security",
                             "Manage your security settings"
                         )
                     }
                 }
             ),
-            accountApiKeys: createRoute(`/${accountViewPaths.API_KEYS}`, () => {
+            accountApiKeys: createRoute(`/account/${accountViewPaths.API_KEYS}`, () => {
                 const AccountView = lazy(() =>
                     import("./components/account/account-view").then((m) => ({
                         default: m.AccountView
@@ -480,14 +329,14 @@ export const accountClientPlugin = (
                     PageComponent: AccountView,
                     meta: createAuthMeta(
                         config,
-                        `/${accountViewPaths.API_KEYS}`,
+                        `/account/${accountViewPaths.API_KEYS}`,
                         "API Keys",
                         "Manage your API keys"
                     )
                 }
             }),
             accountOrganizations: createRoute(
-                `/${accountViewPaths.ORGANIZATIONS}`,
+                `/account/${accountViewPaths.ORGANIZATIONS}`,
                 () => {
                     const AccountView = lazy(() =>
                         import("./components/account/account-view").then(
@@ -501,7 +350,7 @@ export const accountClientPlugin = (
                         PageComponent: AccountView,
                         meta: createAuthMeta(
                             config,
-                            `/${accountViewPaths.ORGANIZATIONS}`,
+                            `/account/${accountViewPaths.ORGANIZATIONS}`,
                             "Organizations",
                             "Manage your organizations"
                         )
@@ -528,7 +377,7 @@ export const organizationClientPlugin = (
         name: "organization",
         routes: () => ({
             organizationSettings: createRoute(
-                `/${organizationViewPaths.SETTINGS}`,
+                `/organization/${organizationViewPaths.SETTINGS}`,
                 () => {
                     const OrganizationView = lazy(() =>
                         import(
@@ -542,7 +391,7 @@ export const organizationClientPlugin = (
                         PageComponent: OrganizationView,
                         meta: createAuthMeta(
                             config,
-                            `/${organizationViewPaths.SETTINGS}`,
+                            `/organization/${organizationViewPaths.SETTINGS}`,
                             "Organization Settings",
                             "Manage your organization settings"
                         )
@@ -550,7 +399,7 @@ export const organizationClientPlugin = (
                 }
             ),
             organizationMembers: createRoute(
-                `/${organizationViewPaths.MEMBERS}`,
+                `/organization/${organizationViewPaths.MEMBERS}`,
                 () => {
                     const OrganizationView = lazy(() =>
                         import(
@@ -564,7 +413,7 @@ export const organizationClientPlugin = (
                         PageComponent: OrganizationView,
                         meta: createAuthMeta(
                             config,
-                            `/${organizationViewPaths.MEMBERS}`,
+                            `/organization/${organizationViewPaths.MEMBERS}`,
                             "Organization Members",
                             "Manage organization members"
                         )
@@ -572,7 +421,7 @@ export const organizationClientPlugin = (
                 }
             ),
             organizationApiKeys: createRoute(
-                `/${organizationViewPaths.API_KEYS}`,
+                `/organization/${organizationViewPaths.API_KEYS}`,
                 () => {
                     const OrganizationView = lazy(() =>
                         import(
@@ -586,7 +435,7 @@ export const organizationClientPlugin = (
                         PageComponent: OrganizationView,
                         meta: createAuthMeta(
                             config,
-                            `/${organizationViewPaths.API_KEYS}`,
+                            `/organization/${organizationViewPaths.API_KEYS}`,
                             "Organization API Keys",
                             "Manage organization API keys"
                         )
