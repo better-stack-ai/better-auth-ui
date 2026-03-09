@@ -1,15 +1,15 @@
 # Weekly Upstream Sync
 
-**Goal:** Sync `olliethedev/better-auth-ui` (`@btst/better-auth-ui`) with upstream `better-auth-ui/better-auth-ui`, update `@btst/stack` to the latest version from `/Users/ollie/Work/better-stack/packages/stack/`, resolve any issues, and bump our package version.
+**Goal:** Sync `better-stack-ai/better-auth-ui` (`@btst/better-auth-ui`) with upstream `better-auth-ui/better-auth-ui`, update `@btst/stack` to the latest version from the `better-stack` repo, resolve any issues, and bump our package version.
 
 ---
 
 ## Context
 
-- **Our fork:** `@btst/better-auth-ui` at `git@github.com:olliethedev/better-auth-ui.git`
+- **Our fork:** `@btst/better-auth-ui` at `git@github.com:better-stack-ai/better-auth-ui.git`
 - **Upstream:** `https://github.com/better-auth-ui/better-auth-ui` — tracked as `upstream/main` remote (already configured)
 - **Our custom commits** add the btst plugin layer: `src/plugins/`, `src/lib/plugin-context-bridge.tsx`, `src/client.ts`, `src/components/*/pages/` wrappers, and our `package.json` branding
-- **btst/stack source** is at `/Users/ollie/Work/better-stack/packages/stack/` — check `package.json` there for the current version
+- **btst/stack source** is in the `better-stack` repo under `packages/stack/` — check its `package.json` for the current version
 
 ---
 
@@ -50,8 +50,9 @@
    Diff `src/lib/auth-ui-provider.tsx` against the previous sync. Any new props added to `AuthUIProviderProps` or `AuthUIContextType` need to be wired up in `src/lib/plugin-context-bridge.tsx`.
 
 7. **Update `@btst/stack` peer dep**
+   Check the current version in the `better-stack` repo:
    ```bash
-   cat /Users/ollie/Work/better-stack/packages/stack/package.json | grep '"version"'
+   cat <path-to-better-stack>/packages/stack/package.json | grep '"version"'
    ```
    Update the `@btst/stack` peer dep range in `package.json` to `>=<new-version>`.
 
