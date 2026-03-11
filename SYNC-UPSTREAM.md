@@ -58,8 +58,8 @@
 
 8. **Bump our version**
    Increment `version` in `package.json`:
-   - **Minor bump** (e.g. `1.2.0` → `1.3.0`) for new routes or btst additions
-   - **Patch bump** (e.g. `1.2.0` → `1.2.1`) for a pure upstream sync with no new btst additions
+   - **Minor bump** (e.g. `1.2.0` → `1.3.0`) for new routes or btst additions (whether alongside an upstream sync or fork-only)
+   - **Patch bump** (e.g. `1.2.0` → `1.2.1`) for a pure upstream sync with no new btst additions, or for a fork-only fix/small tweak with no new functionality
 
 9. **Build and verify**
    ```bash

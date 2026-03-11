@@ -1,9 +1,27 @@
-import { createRoute, defineClientPlugin } from "@btst/stack/plugins/client"
+import {
+    type ClientPlugin,
+    createRoute,
+    defineClientPlugin,
+    type Route
+} from "@btst/stack/plugins/client"
 import { lazy } from "react"
+import type { OrganizationViewPageProps } from "../components/organization/organization-view"
 import { organizationViewPaths } from "../lib/view-paths"
+import type { AuthLocalization } from "../localization/auth-localization"
 import type { OrganizationOptions } from "../types/organization-options"
 import type { TeamOptions } from "../types/team-options"
 import type { AuthPluginOverrides } from "./auth-plugin"
+
+/**
+ * Per-page customization props for organization views.
+ * Passed via OrganizationPluginOverrides.pageProps.organizationSettings, etc.
+ */
+export type OrganizationPageProps = Omit<
+    OrganizationViewPageProps,
+    "path" | "pathname" | "view" | "localization"
+> & {
+    localization?: Partial<AuthLocalization>
+}
 
 /**
  * Configuration for organization client plugin
@@ -40,6 +58,24 @@ export interface OrganizationPluginOverrides
         error: Error,
         context: { path: string; isSSR: boolean }
     ) => void
+    /**
+     * Per-page props (className, classNames, localization, etc.)
+     * passed directly to each organization view component.
+     */
+    pageProps?: NonNullable<AuthPluginOverrides["pageProps"]> & {
+        organizationSettings?: OrganizationPageProps
+        organizationMembers?: OrganizationPageProps
+        organizationApiKeys?: OrganizationPageProps
+        organizationTeams?: OrganizationPageProps
+    }
+}
+
+// Curried helper: pins TOverrides=OrganizationPluginOverrides while letting TRoutes be inferred.
+// See auth-plugin.ts for explanation of why this pattern is needed.
+function definePlugin<TRoutes extends Record<string, Route>>(
+    plugin: ClientPlugin<OrganizationPluginOverrides, TRoutes>
+): ClientPlugin<OrganizationPluginOverrides, TRoutes> {
+    return defineClientPlugin(plugin)
 }
 
 // Meta generator factory for organization pages
@@ -74,7 +110,7 @@ function createAuthMeta(
  * @param config - Configuration including queryClient and URLs
  */
 export const organizationClientPlugin = (config: OrganizationClientConfig) =>
-    defineClientPlugin<OrganizationPluginOverrides>({
+    definePlugin({
         name: "organization",
         routes: () => ({
             organizationSettings: createRoute(

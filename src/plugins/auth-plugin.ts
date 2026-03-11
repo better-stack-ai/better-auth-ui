@@ -1,5 +1,11 @@
-import { createRoute, defineClientPlugin } from "@btst/stack/plugins/client"
+import {
+    type ClientPlugin,
+    createRoute,
+    defineClientPlugin,
+    type Route
+} from "@btst/stack/plugins/client"
 import { lazy } from "react"
+import type { AuthViewProps } from "../components/auth/auth-view"
 import type { AuthViewPaths } from "../lib/view-paths"
 import { authViewPaths } from "../lib/view-paths"
 import type { AuthLocalization } from "../localization/auth-localization"
@@ -16,6 +22,17 @@ import type { Link } from "../types/link"
 import type { RenderToast } from "../types/render-toast"
 import type { SignUpOptions } from "../types/sign-up-options"
 import type { SocialOptions } from "../types/social-options"
+
+/**
+ * Per-page customization props for auth views.
+ * Passed via AuthPluginOverrides.pageProps.signIn, .signUp, etc.
+ */
+export type AuthPageProps = Omit<
+    AuthViewProps,
+    "path" | "pathname" | "view" | "localization"
+> & {
+    localization?: Partial<AuthLocalization>
+}
 
 /**
  * Configuration for auth client plugin
@@ -206,6 +223,34 @@ export interface AuthPluginOverrides {
         error: Error,
         context: { path: string; isSSR: boolean }
     ) => void
+    /**
+     * Per-page props (className, classNames, localization, etc.)
+     * passed directly to each auth view component.
+     */
+    pageProps?: {
+        signIn?: AuthPageProps
+        signUp?: AuthPageProps
+        forgotPassword?: AuthPageProps
+        resetPassword?: AuthPageProps
+        magicLink?: AuthPageProps
+        emailOtp?: AuthPageProps
+        twoFactor?: AuthPageProps
+        recoverAccount?: AuthPageProps
+        callback?: Pick<AuthPageProps, "redirectTo">
+        signOut?: Pick<AuthPageProps, "redirectTo">
+        acceptInvitation?: Pick<AuthPageProps, "className">
+        emailVerification?: AuthPageProps
+    }
+}
+
+// Curried helper: pins TOverrides=AuthPluginOverrides while letting TRoutes be inferred
+// from the routes object. Calling defineClientPlugin<AuthPluginOverrides>({...}) would
+// prevent TypeScript from inferring TRoutes (it falls back to Record<string, Route>),
+// poisoning MergeAllPluginRoutes with a string index signature downstream.
+function definePlugin<TRoutes extends Record<string, Route>>(
+    plugin: ClientPlugin<AuthPluginOverrides, TRoutes>
+): ClientPlugin<AuthPluginOverrides, TRoutes> {
+    return defineClientPlugin(plugin)
 }
 
 // Meta generator factory for auth pages
@@ -240,7 +285,7 @@ function createAuthMeta(
  * @param config - Configuration including queryClient and URLs
  */
 export const authClientPlugin = (config: AuthClientConfig) =>
-    defineClientPlugin<AuthPluginOverrides>({
+    definePlugin({
         name: "auth",
         routes: () => ({
             signIn: createRoute(`/auth/${authViewPaths.SIGN_IN}`, () => {

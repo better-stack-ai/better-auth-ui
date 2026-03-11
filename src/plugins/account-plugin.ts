@@ -1,10 +1,28 @@
-import { createRoute, defineClientPlugin } from "@btst/stack/plugins/client"
+import {
+    type ClientPlugin,
+    createRoute,
+    defineClientPlugin,
+    type Route
+} from "@btst/stack/plugins/client"
 import { lazy } from "react"
+import type { AccountViewProps } from "../components/account/account-view"
 import { accountViewPaths } from "../lib/view-paths"
+import type { AuthLocalization } from "../localization/auth-localization"
 import type { AccountOptions } from "../types/account-options"
 import type { DeleteUserOptions } from "../types/delete-user-options"
 import type { TeamOptions } from "../types/team-options"
 import type { AuthPluginOverrides } from "./auth-plugin"
+
+/**
+ * Per-page customization props for account views.
+ * Passed via AccountPluginOverrides.pageProps.accountSettings, etc.
+ */
+export type AccountPageProps = Omit<
+    AccountViewProps,
+    "path" | "pathname" | "view" | "localization"
+> & {
+    localization?: Partial<AuthLocalization>
+}
 
 /**
  * Configuration for account client plugin
@@ -45,6 +63,25 @@ export interface AccountPluginOverrides extends Partial<AuthPluginOverrides> {
         error: Error,
         context: { path: string; isSSR: boolean }
     ) => void
+    /**
+     * Per-page props (className, classNames, localization, etc.)
+     * passed directly to each account view component.
+     */
+    pageProps?: NonNullable<AuthPluginOverrides["pageProps"]> & {
+        accountSettings?: AccountPageProps
+        accountSecurity?: AccountPageProps
+        accountApiKeys?: AccountPageProps
+        accountOrganizations?: AccountPageProps
+        accountTeams?: AccountPageProps
+    }
+}
+
+// Curried helper: pins TOverrides=AccountPluginOverrides while letting TRoutes be inferred.
+// See auth-plugin.ts for explanation of why this pattern is needed.
+function definePlugin<TRoutes extends Record<string, Route>>(
+    plugin: ClientPlugin<AccountPluginOverrides, TRoutes>
+): ClientPlugin<AccountPluginOverrides, TRoutes> {
+    return defineClientPlugin(plugin)
 }
 
 // Meta generator factory for account pages
@@ -79,7 +116,7 @@ function createAuthMeta(
  * @param config - Configuration including queryClient and URLs
  */
 export const accountClientPlugin = (config: AccountClientConfig) =>
-    defineClientPlugin<AccountPluginOverrides>({
+    definePlugin({
         name: "account",
         routes: () => ({
             // Account views
