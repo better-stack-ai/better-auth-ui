@@ -146,7 +146,12 @@ export interface AuthPluginOverrides {
     /**
      * Show Verify Email card for unverified emails
      */
-    emailVerification?: boolean
+    emailVerification?: boolean | { otp?: boolean }
+    /**
+     * Localize server-side error messages
+     * @default true
+     */
+    localizeErrors?: boolean
     /**
      * Enable or disable user change email support
      * @default true

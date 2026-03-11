@@ -92,19 +92,12 @@ export function BetterAuthPluginProvider({
         Partial<OrganizationPluginOverrides>
     >("organization", {})
 
-    // Merge overrides: account/organization can override auth settings
-    const overrides = {
-        ...authOverrides,
-        ...accountOverrides,
-        ...organizationOverrides
-    }
-
-    const authClient = overrides.authClient as AuthClient
+    const authClient = authOverrides.authClient as AuthClient
 
     const avatar = useMemo<AvatarOptions | undefined>(() => {
-        if (!overrides.avatar) return
+        if (!authOverrides.avatar) return
 
-        if (overrides.avatar === true) {
+        if (authOverrides.avatar === true) {
             return {
                 extension: "png",
                 size: 128
@@ -112,14 +105,15 @@ export function BetterAuthPluginProvider({
         }
 
         return {
-            upload: overrides.avatar.upload,
-            delete: overrides.avatar.delete,
-            extension: overrides.avatar.extension || "png",
+            upload: authOverrides.avatar.upload,
+            delete: authOverrides.avatar.delete,
+            extension: authOverrides.avatar.extension || "png",
             size:
-                overrides.avatar.size || (overrides.avatar.upload ? 256 : 128),
-            Image: overrides.avatar.Image
+                authOverrides.avatar.size ||
+                (authOverrides.avatar.upload ? 256 : 128),
+            Image: authOverrides.avatar.Image
         }
-    }, [overrides.avatar])
+    }, [authOverrides.avatar])
 
     const account = useMemo<AccountOptionsContext | undefined>(() => {
         const accountProp = accountOverrides?.account
@@ -167,41 +161,47 @@ export function BetterAuthPluginProvider({
     }, [accountOverrides?.deleteUser])
 
     const social = useMemo<SocialOptions | undefined>(() => {
-        return overrides.social
-    }, [overrides.social])
+        return authOverrides.social
+    }, [authOverrides.social])
 
     const genericOAuth = useMemo<GenericOAuthOptions | undefined>(() => {
-        return overrides.genericOAuth
-    }, [overrides.genericOAuth])
+        return authOverrides.genericOAuth
+    }, [authOverrides.genericOAuth])
 
     const credentials = useMemo<CredentialsOptions | undefined>(() => {
-        if (overrides.credentials === false) return
+        if (authOverrides.credentials === false) return
 
-        if (overrides.credentials === true) {
+        if (authOverrides.credentials === true) {
             return {
-                forgotPassword: true
+                forgotPassword: true,
+                usernameRequired: true
             }
         }
 
         return {
-            ...overrides.credentials,
-            forgotPassword: overrides.credentials?.forgotPassword ?? true
+            ...authOverrides.credentials,
+            forgotPassword: authOverrides.credentials?.forgotPassword ?? true,
+            usernameRequired:
+                authOverrides.credentials?.usernameRequired ?? true
         }
-    }, [overrides.credentials])
+    }, [authOverrides.credentials])
 
     const signUp = useMemo<SignUpOptions | undefined>(() => {
-        if (overrides.signUp === false) return
+        if (authOverrides.signUp === false) return
 
-        if (overrides.signUp === true || overrides.signUp === undefined) {
+        if (
+            authOverrides.signUp === true ||
+            authOverrides.signUp === undefined
+        ) {
             return {
                 fields: ["name"]
             }
         }
 
         return {
-            fields: overrides.signUp.fields || ["name"]
+            fields: authOverrides.signUp.fields || ["name"]
         }
-    }, [overrides.signUp])
+    }, [authOverrides.signUp])
 
     const organization = useMemo<OrganizationOptionsContext | undefined>(() => {
         const organizationProp = organizationOverrides?.organization
@@ -292,42 +292,48 @@ export function BetterAuthPluginProvider({
 
     const defaultMutators = useMemo(() => {
         return {
-            deleteApiKey: (params: any) =>
+            deleteApiKey: (params) =>
                 authClient.apiKey.delete({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            deletePasskey: (params: any) =>
+            deletePasskey: (params) =>
                 authClient.passkey.deletePasskey({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            revokeDeviceSession: (params: any) =>
+            revokeDeviceSession: (params) =>
                 authClient.multiSession.revoke({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            revokeSession: (params: any) =>
+            revokeSession: (params) =>
                 authClient.revokeSession({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            setActiveSession: (params: any) =>
+            setActiveSession: (params) =>
                 authClient.multiSession.setActive({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            updateOrganization: (params: any) =>
+            updateOrganization: (params) =>
                 authClient.organization.update({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            updateUser: (params: any) =>
+            updateTeam: (params) =>
+                authClient.$fetch("/organization/update-team", {
+                    method: "POST",
+                    body: params,
+                    throw: true
+                }),
+            updateUser: (params) =>
                 authClient.updateUser({
                     ...params,
                     fetchOptions: { throw: true }
                 }),
-            unlinkAccount: (params: any) =>
+            unlinkAccount: (params) =>
                 authClient.unlinkAccount({
                     ...params,
                     fetchOptions: { throw: true }
@@ -343,7 +349,7 @@ export function BetterAuthPluginProvider({
                     queryFn: authClient.listAccounts,
                     cacheKey: "listAccounts"
                 }),
-            useAccountInfo: (params: any) =>
+            useAccountInfo: (params) =>
                 useAuthData({
                     queryFn: () => authClient.accountInfo(params),
                     cacheKey: `accountInfo:${JSON.stringify(params)}`
@@ -366,7 +372,7 @@ export function BetterAuthPluginProvider({
                 }),
             useActiveOrganization: authClient.useActiveOrganization,
             useListOrganizations: authClient.useListOrganizations,
-            useHasPermission: (params: any) =>
+            useHasPermission: (params) =>
                 useAuthData({
                     queryFn: () =>
                         authClient.$fetch("/organization/has-permission", {
@@ -375,13 +381,13 @@ export function BetterAuthPluginProvider({
                         }),
                     cacheKey: `hasPermission:${JSON.stringify(params)}`
                 }),
-            useInvitation: (params: any) =>
+            useInvitation: (params) =>
                 useAuthData({
                     queryFn: () =>
                         authClient.organization.getInvitation(params),
                     cacheKey: `invitation:${JSON.stringify(params)}`
                 }),
-            useListInvitations: (params: any) =>
+            useListInvitations: (params) =>
                 useAuthData({
                     queryFn: () =>
                         authClient.$fetch(
@@ -397,46 +403,81 @@ export function BetterAuthPluginProvider({
                         ),
                     cacheKey: `listUserInvitations`
                 }),
-            useListMembers: (params: any) =>
+            useListMembers: (params) =>
                 useAuthData({
                     queryFn: () =>
                         authClient.$fetch(
                             `/organization/list-members?organizationId=${params?.query?.organizationId || ""}`
                         ),
                     cacheKey: `listMembers:${JSON.stringify(params)}`
+                }),
+            useListTeams: (params?: { organizationId?: string }) =>
+                useAuthData({
+                    queryFn: () =>
+                        authClient.$fetch(
+                            `/organization/list-teams?organizationId=${params?.organizationId || ""}`
+                        ),
+                    cacheKey: `listTeams:${JSON.stringify(params)}`
+                }),
+            useListTeamMembers: (params: { teamId?: string }) =>
+                useAuthData({
+                    queryFn: () =>
+                        authClient.$fetch("/organization/list-team-members", {
+                            method: "POST",
+                            body: params?.teamId
+                                ? { query: { teamId: params.teamId } }
+                                : undefined
+                        }),
+                    cacheKey: `listTeamMembers:${JSON.stringify(params)}`
+                }),
+            useListUserTeams: () =>
+                useAuthData({
+                    queryFn: () =>
+                        authClient.$fetch("/organization/list-user-teams"),
+                    cacheKey: "listUserTeams"
                 })
         } as AuthHooks
     }, [authClient])
 
     const viewPaths = useMemo(() => {
-        return { ...authViewPaths, ...overrides.viewPaths }
-    }, [overrides.viewPaths])
+        return { ...authViewPaths, ...authOverrides.viewPaths }
+    }, [authOverrides.viewPaths])
 
     const localization = useMemo(() => {
-        return { ...authLocalization, ...overrides.localization }
-    }, [overrides.localization])
+        return { ...authLocalization, ...authOverrides.localization }
+    }, [authOverrides.localization])
 
     const hooks = useMemo(() => {
-        return { ...defaultHooks, ...overrides.hooks }
-    }, [defaultHooks, overrides.hooks])
+        return { ...defaultHooks, ...authOverrides.hooks }
+    }, [defaultHooks, authOverrides.hooks])
 
     const mutators = useMemo(() => {
-        return { ...defaultMutators, ...overrides.mutators }
-    }, [defaultMutators, overrides.mutators])
+        return { ...defaultMutators, ...authOverrides.mutators }
+    }, [defaultMutators, authOverrides.mutators])
 
-    // Remove trailing slash from baseURL
-    const baseURL = overrides.baseURL
-        ? overrides.baseURL.endsWith("/")
-            ? overrides.baseURL.slice(0, -1)
-            : overrides.baseURL
+    // Remove trailing slash from baseURL — use auth-specific value only
+    const baseURL = authOverrides.baseURL
+        ? authOverrides.baseURL.endsWith("/")
+            ? authOverrides.baseURL.slice(0, -1)
+            : authOverrides.baseURL
         : ""
 
-    // Remove trailing slash from basePath
-    const basePath = overrides.basePath
-        ? overrides.basePath.endsWith("/")
-            ? overrides.basePath.slice(0, -1)
-            : overrides.basePath
+    // Remove trailing slash from basePath — use auth-specific value only.
+    // accountOverrides/organizationOverrides inherit basePath from AuthPluginOverrides
+    // but their basePath refers to their own route prefix (e.g. "/account"), not the
+    // auth prefix. Spreading them would corrupt auth navigation links.
+    const basePath = authOverrides.basePath
+        ? authOverrides.basePath.endsWith("/")
+            ? authOverrides.basePath.slice(0, -1)
+            : authOverrides.basePath
         : "/auth"
+
+    const emailVerification = useMemo(() => {
+        const ev = authOverrides.emailVerification
+        if (!ev) return undefined
+        if (ev === true) return { otp: false }
+        return { otp: ev.otp ?? false }
+    }, [authOverrides.emailVerification])
 
     const { data: sessionData } = hooks.useSession()
 
@@ -445,47 +486,52 @@ export function BetterAuthPluginProvider({
         avatar,
         basePath: basePath === "/" ? "" : basePath,
         baseURL,
-        captcha: overrides.captcha,
-        redirectTo: overrides.redirectTo || "/",
-        changeEmail: overrides.changeEmail ?? true,
+        // Auth-specific feature flags — always read from authOverrides, never from the
+        // merged blob, so account/org overrides can't silently overwrite them.
+        captcha: authOverrides.captcha,
+        redirectTo: authOverrides.redirectTo || "/",
+        changeEmail: authOverrides.changeEmail ?? true,
         credentials,
         deleteUser,
-        freshAge: overrides.freshAge ?? 60 * 60 * 24,
+        freshAge: authOverrides.freshAge ?? 60 * 60 * 24,
         genericOAuth,
         hooks,
         mutators,
         localization,
-        nameRequired: overrides.nameRequired ?? true,
+        nameRequired: authOverrides.nameRequired ?? true,
         organization,
         teams,
         account,
         signUp,
         social,
-        toast: overrides.toast || defaultToast,
-        navigate: overrides.navigate || defaultNavigate,
-        replace: overrides.replace || overrides.navigate || defaultReplace,
+        // Shared navigation — account/org can legitimately override these via ...authConfig
+        toast: authOverrides.toast || defaultToast,
+        navigate: authOverrides.navigate || defaultNavigate,
+        replace:
+            authOverrides.replace || authOverrides.navigate || defaultReplace,
         viewPaths,
-        Link: overrides.Link || DefaultLink,
-        apiKey: overrides.apiKey,
-        gravatar: overrides.gravatar,
-        additionalFields: overrides.additionalFields,
-        magicLink: overrides.magicLink,
-        emailOTP: overrides.emailOTP,
-        passkey: overrides.passkey,
-        oneTap: overrides.oneTap,
-        twoFactor: overrides.twoFactor,
-        multiSession: overrides.multiSession,
-        emailVerification: overrides.emailVerification,
-        persistClient: overrides.persistClient,
-        optimistic: overrides.optimistic,
-        onSessionChange: overrides.onSessionChange
+        Link: authOverrides.Link || DefaultLink,
+        apiKey: authOverrides.apiKey,
+        gravatar: authOverrides.gravatar,
+        additionalFields: authOverrides.additionalFields,
+        magicLink: authOverrides.magicLink,
+        emailOTP: authOverrides.emailOTP,
+        passkey: authOverrides.passkey,
+        oneTap: authOverrides.oneTap,
+        twoFactor: authOverrides.twoFactor,
+        multiSession: authOverrides.multiSession,
+        emailVerification,
+        localizeErrors: authOverrides.localizeErrors ?? true,
+        persistClient: authOverrides.persistClient,
+        optimistic: authOverrides.optimistic,
+        onSessionChange: authOverrides.onSessionChange
     }
 
     return (
         <AuthUIContext.Provider value={contextValue}>
             {sessionData && organization && <OrganizationRefetcher />}
 
-            {overrides.captcha?.provider === "google-recaptcha-v3" ? (
+            {authOverrides.captcha?.provider === "google-recaptcha-v3" ? (
                 <RecaptchaV3>{children}</RecaptchaV3>
             ) : (
                 children
