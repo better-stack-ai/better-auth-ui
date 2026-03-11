@@ -41,11 +41,11 @@ vi.mock("../../hooks/use-auth-data", () => ({
     }
 }))
 
-vi.mock("../components/captcha/recaptcha-v3", () => ({
+vi.mock("../../components/captcha/recaptcha-v3", () => ({
     RecaptchaV3: ({ children }: { children: React.ReactNode }) => children
 }))
 
-vi.mock("../lib/organization-refetcher", () => ({
+vi.mock("../organization-refetcher", () => ({
     OrganizationRefetcher: () => null
 }))
 
