@@ -4,7 +4,8 @@ import { Button } from "../ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
 
 interface FallbackProps {
-    error: Error & { digest?: string }
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    error: any & { digest?: string }
     reset?: () => void
 }
 

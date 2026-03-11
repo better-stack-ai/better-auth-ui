@@ -135,3 +135,4 @@ dist
 
 # Webstorm project files
 .idea
+better-auth-ui.code-workspace

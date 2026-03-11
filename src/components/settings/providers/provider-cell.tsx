@@ -52,7 +52,6 @@ export function ProviderCell({
 
     const [isLoading, setIsLoading] = useState(false)
 
-
     const handleLink = async () => {
         setIsLoading(true)
         const callbackURL = `${baseURL}${basePath}/${viewPaths.CALLBACK}?redirectTo=${encodeURIComponent(window.location.pathname)}`
@@ -159,10 +158,7 @@ function ProviderCellContent({
 
     return (
         <div className="flex min-w-0 flex-1 items-center gap-3">
-            <ProviderContent
-                classNames={classNames}
-                provider={provider}
-            />
+            <ProviderContent classNames={classNames} provider={provider} />
         </div>
     )
 }
@@ -190,10 +186,7 @@ function ConnectedProviderContent({
     const emailElement = isPending ? (
         <Skeleton className="my-0.5 h-3 w-28" />
     ) : email ? (
-        <span
-            ref={emailRef}
-            className="truncate text-muted-foreground text-xs"
-        >
+        <span ref={emailRef} className="truncate text-muted-foreground text-xs">
             {email}
         </span>
     ) : null
@@ -223,11 +216,7 @@ function ConnectedProviderContent({
         )
     }
 
-    return (
-        <div className={wrapperClassName}>
-            {content}
-        </div>
-    )
+    return <div className={wrapperClassName}>{content}</div>
 }
 
 function ProviderContent({
@@ -242,7 +231,9 @@ function ProviderContent({
     return (
         <>
             {provider.icon && (
-                <provider.icon className={cn("size-4 shrink-0", classNames?.icon)} />
+                <provider.icon
+                    className={cn("size-4 shrink-0", classNames?.icon)}
+                />
             )}
 
             <div className="flex min-w-0 flex-col">
@@ -252,4 +243,3 @@ function ProviderContent({
         </>
     )
 }
-
