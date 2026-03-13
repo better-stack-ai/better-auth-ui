@@ -1,4 +1,5 @@
 "use client"
+import type { Organization } from "better-auth/plugins/organization"
 import { useContext, useMemo, useState } from "react"
 
 import { useIsHydrated } from "../../hooks/use-hydrated"
@@ -50,7 +51,7 @@ export function OrganizationsCard({
             >
                 <CardContent className={cn("grid gap-4", classNames?.content)}>
                     {isPending && <SettingsCellSkeleton />}
-                    {organizations?.map((organization) => (
+                    {organizations?.map((organization: Organization) => (
                         <OrganizationCell
                             key={organization.id}
                             classNames={classNames}

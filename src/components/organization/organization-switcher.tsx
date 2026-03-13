@@ -441,7 +441,7 @@ export function OrganizationSwitcher({
                         ))}
 
                     {organizations?.map(
-                        (organization) =>
+                        (organization: Organization) =>
                             organization.id !== activeOrganization?.id &&
                             (pathMode === "slug" ? (
                                 <Link
