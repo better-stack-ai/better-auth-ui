@@ -123,6 +123,7 @@ function EmailForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(sendEmailOTP)}
                 noValidate={isHydrated}
                 className={cn("grid w-full gap-6", className, classNames?.base)}
@@ -253,6 +254,7 @@ export function OTPForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(verifyCode)}
                 className={cn("grid w-full gap-6", className, classNames?.base)}
             >

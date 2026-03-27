@@ -143,6 +143,7 @@ export function DeleteOrganizationDialog({
 
                 <Form {...form}>
                     <form
+                        method="POST"
                         onSubmit={form.handleSubmit(deleteOrganization)}
                         className="grid gap-6"
                     >

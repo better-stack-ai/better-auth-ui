@@ -1,9 +1,9 @@
 "use client"
 
 import type { Session } from "better-auth"
+import Bowser from "bowser"
 import { LaptopIcon, Loader2, SmartphoneIcon } from "lucide-react"
 import { useContext, useState } from "react"
-import { UAParser } from "ua-parser-js"
 import { AuthUIContext } from "../../../lib/auth-ui-provider"
 import { cn, getLocalizedError } from "../../../lib/utils"
 import type { AuthLocalization } from "../../../localization/auth-localization"
@@ -70,8 +70,8 @@ export function SessionCell({
         }
     }
 
-    const parser = UAParser(session.userAgent as string)
-    const isMobile = parser.device.type === "mobile"
+    const parsed = session.userAgent ? Bowser.parse(session.userAgent) : null
+    const isMobile = parsed?.platform.type === "mobile"
 
     return (
         <Card
@@ -97,10 +97,10 @@ export function SessionCell({
                 <span className="text-muted-foreground text-xs">
                     {session.userAgent?.includes("tauri-plugin-http")
                         ? localization.APP
-                        : parser.os.name && parser.browser.name
-                          ? `${parser.os.name}, ${parser.browser.name}`
-                          : parser.os.name ||
-                            parser.browser.name ||
+                        : parsed?.os.name && parsed?.browser.name
+                          ? `${parsed.os.name}, ${parsed.browser.name}`
+                          : parsed?.os.name ||
+                            parsed?.browser.name ||
                             session.userAgent ||
                             localization.UNKNOWN}
                 </span>

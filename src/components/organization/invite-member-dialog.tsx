@@ -178,6 +178,7 @@ export function InviteMemberDialog({
 
                 <Form {...form}>
                     <form
+                        method="POST"
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-6"
                     >

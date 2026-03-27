@@ -118,6 +118,7 @@ export function ForgotPasswordForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(forgotPassword)}
                 noValidate={isHydrated}
                 className={cn("grid w-full gap-6", className, classNames?.base)}

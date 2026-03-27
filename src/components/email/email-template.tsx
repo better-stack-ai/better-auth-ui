@@ -1,3 +1,5 @@
+declare const process: { env: Record<string, string | undefined> }
+
 import {
     Body,
     Button,

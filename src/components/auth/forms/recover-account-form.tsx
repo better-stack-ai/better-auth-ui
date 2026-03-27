@@ -94,6 +94,7 @@ export function RecoverAccountForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(verifyBackupCode)}
                 className={cn("grid gap-6", className, classNames?.base)}
             >

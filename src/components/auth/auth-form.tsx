@@ -176,6 +176,7 @@ export function AuthForm({
                 redirectTo={redirectTo}
                 isSubmitting={isSubmitting}
                 setIsSubmitting={setIsSubmitting}
+                callbackURL={callbackURL}
             />
         ) : magicLink ? (
             <MagicLinkForm

@@ -199,6 +199,7 @@ export function TwoFactorForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(verifyCode)}
                 className={cn("grid w-full gap-6", className, classNames?.base)}
             >

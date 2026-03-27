@@ -128,7 +128,11 @@ export function ChangeEmailCard({
     return (
         <>
             <Form {...form}>
-                <form noValidate onSubmit={form.handleSubmit(changeEmail)}>
+                <form
+                    method="POST"
+                    noValidate
+                    onSubmit={form.handleSubmit(changeEmail)}
+                >
                     <SettingsCard
                         className={className}
                         classNames={classNames}
@@ -184,6 +188,7 @@ export function ChangeEmailCard({
                 !sessionData?.user.emailVerified && (
                     <Form {...resendForm}>
                         <form
+                            method="POST"
                             onSubmit={resendForm.handleSubmit(
                                 resendVerification
                             )}
