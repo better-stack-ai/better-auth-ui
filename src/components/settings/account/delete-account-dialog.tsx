@@ -163,6 +163,7 @@ export function DeleteAccountDialog({
 
                 <Form {...form}>
                     <form
+                        method="POST"
                         onSubmit={form.handleSubmit(deleteAccount)}
                         className="grid gap-6"
                     >

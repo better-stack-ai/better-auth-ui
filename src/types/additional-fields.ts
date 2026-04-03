@@ -14,6 +14,11 @@ export interface AdditionalField {
      */
     multiline?: boolean
     validate?: (value: string) => Promise<boolean>
+    errorMessage?: {
+        required?: string
+        invalid?: string
+        validate?: string
+    }
 }
 
 export interface AdditionalFields {

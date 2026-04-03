@@ -4,11 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useContext } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-
+import { useCaptcha } from "../../../hooks/use-captcha"
 import { AuthUIContext } from "../../../lib/auth-ui-provider"
 import { cn, getLocalizedError, getPasswordSchema } from "../../../lib/utils"
 import type { AuthLocalization } from "../../../localization/auth-localization"
 import type { PasswordValidation } from "../../../types/password-validation"
+import { Captcha } from "../../captcha/captcha"
 import { PasswordInput } from "../../password-input"
 import { CardContent } from "../../ui/card"
 import {
@@ -51,6 +52,7 @@ export function ChangePasswordCard({
         credentials,
         hooks: { useSession, useListAccounts },
         localization: contextLocalization,
+        navigate,
         viewPaths,
         toast,
         localizeErrors
@@ -61,6 +63,10 @@ export function ChangePasswordCard({
 
     localization = { ...contextLocalization, ...localization }
     passwordValidation = { ...contextPasswordValidation, ...passwordValidation }
+
+    const { captchaRef, getCaptchaHeaders, resetCaptcha } = useCaptcha({
+        localization
+    })
 
     const { data: sessionData } = useSession()
 
@@ -122,13 +128,20 @@ export function ChangePasswordCard({
             await authClient.requestPasswordReset({
                 email,
                 redirectTo: `${baseURL}${basePath}/${viewPaths.RESET_PASSWORD}`,
-                fetchOptions: { throw: true }
+                fetchOptions: {
+                    throw: true,
+                    headers: await getCaptchaHeaders("/forget-password")
+                }
             })
 
             toast({
                 variant: "success",
                 message: localization.FORGOT_PASSWORD_EMAIL!
             })
+
+            navigate(
+                `${basePath}/${viewPaths.SIGN_IN}${window.location.search}`
+            )
         } catch (error) {
             toast({
                 variant: "error",
@@ -138,6 +151,7 @@ export function ChangePasswordCard({
                     localizeErrors
                 })
             })
+            resetCaptcha()
         }
     }
 
@@ -178,7 +192,10 @@ export function ChangePasswordCard({
     if (!isPending && !credentialsLinked) {
         return (
             <Form {...setPasswordForm}>
-                <form onSubmit={setPasswordForm.handleSubmit(setPassword)}>
+                <form
+                    method="POST"
+                    onSubmit={setPasswordForm.handleSubmit(setPassword)}
+                >
                     <SettingsCard
                         title={localization.SET_PASSWORD}
                         description={localization.SET_PASSWORD_DESCRIPTION}
@@ -186,7 +203,15 @@ export function ChangePasswordCard({
                         isPending={isPending}
                         className={className}
                         classNames={classNames}
-                    />
+                    >
+                        <div className="mx-auto w-full max-w-sm">
+                            <Captcha
+                                ref={captchaRef}
+                                localization={localization}
+                                action="/forget-password"
+                            />
+                        </div>
+                    </SettingsCard>
                 </form>
             </Form>
         )
@@ -194,7 +219,7 @@ export function ChangePasswordCard({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(changePassword)}>
+            <form method="POST" onSubmit={form.handleSubmit(changePassword)}>
                 <SettingsCard
                     className={className}
                     classNames={classNames}

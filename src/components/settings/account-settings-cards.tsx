@@ -87,7 +87,8 @@ export function AccountSettingsCards({
                     required,
                     type,
                     multiline,
-                    validate
+                    validate,
+                    errorMessage
                 } = additionalField
 
                 // @ts-expect-error Custom fields are not typed
@@ -108,6 +109,7 @@ export function AccountSettingsCards({
                         type={type}
                         multiline={multiline}
                         validate={validate}
+                        errorMessage={errorMessage}
                     />
                 )
             })}
