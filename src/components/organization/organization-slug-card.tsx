@@ -172,7 +172,10 @@ function OrganizationSlugForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(updateOrganizationSlug)}>
+            <form
+                method="POST"
+                onSubmit={form.handleSubmit(updateOrganizationSlug)}
+            >
                 <SettingsCard
                     className={className}
                     classNames={classNames}

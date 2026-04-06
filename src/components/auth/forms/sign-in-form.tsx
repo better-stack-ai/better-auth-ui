@@ -42,6 +42,7 @@ export interface SignInFormProps {
     redirectTo?: string
     setIsSubmitting?: (isSubmitting: boolean) => void
     passwordValidation?: PasswordValidation
+    callbackURL?: string
 }
 
 export function SignInForm({
@@ -51,7 +52,8 @@ export function SignInForm({
     localization,
     redirectTo,
     setIsSubmitting,
-    passwordValidation
+    passwordValidation,
+    callbackURL
 }: SignInFormProps) {
     const isHydrated = useIsHydrated()
     const { captchaRef, getCaptchaHeaders, resetCaptcha } = useCaptcha({
@@ -128,7 +130,8 @@ export function SignInForm({
                     username: email,
                     password,
                     rememberMe,
-                    fetchOptions
+                    fetchOptions,
+                    callbackURL
                 })
             } else {
                 const fetchOptions: BetterFetchOption = {
@@ -140,7 +143,8 @@ export function SignInForm({
                     email,
                     password,
                     rememberMe,
-                    fetchOptions
+                    fetchOptions,
+                    callbackURL
                 })
             }
 
@@ -181,6 +185,7 @@ export function SignInForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(signIn)}
                 noValidate={isHydrated}
                 className={cn("grid w-full gap-6", className, classNames?.base)}

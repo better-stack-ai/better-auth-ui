@@ -141,6 +141,7 @@ export function TwoFactorPasswordDialog({
 
                     <Form {...form}>
                         <form
+                            method="POST"
                             onSubmit={form.handleSubmit(
                                 isTwoFactorEnabled
                                     ? disableTwoFactor

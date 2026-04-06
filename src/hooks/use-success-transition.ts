@@ -9,12 +9,6 @@ export function useOnSuccessTransition({
 }) {
     const { redirectTo: contextRedirectTo } = useContext(AuthUIContext)
 
-    const getRedirectTo = useCallback(
-        () =>
-            redirectToProp || getSearchParam("redirectTo") || contextRedirectTo,
-        [redirectToProp, contextRedirectTo]
-    )
-
     const [isPending, setIsPending] = useState(false)
 
     const {
@@ -34,8 +28,16 @@ export function useOnSuccessTransition({
 
         setIsPending(false)
 
-        navigate(getRedirectTo())
-    }, [refetchSession, onSessionChange, navigate, getRedirectTo])
+        const redirectTo =
+            redirectToProp || getSearchParam("redirectTo") || contextRedirectTo
+        navigate(redirectTo)
+    }, [
+        refetchSession,
+        onSessionChange,
+        navigate,
+        redirectToProp,
+        contextRedirectTo
+    ])
 
     return { onSuccess, isPending }
 }

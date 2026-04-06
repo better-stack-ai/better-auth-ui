@@ -191,26 +191,36 @@ export function SignUpForm({
                     ? z.preprocess(
                           (val) => (!val ? undefined : Number(val)),
                           z.number({
-                              message: `${additionalField.label} ${localization.IS_INVALID}`
+                              message:
+                                  additionalField.errorMessage?.invalid ??
+                                  `${additionalField.label} ${localization.IS_INVALID}`
                           })
                       )
                     : z.coerce
                           .number({
-                              message: `${additionalField.label} ${localization.IS_INVALID}`
+                              message:
+                                  additionalField.errorMessage?.invalid ??
+                                  `${additionalField.label} ${localization.IS_INVALID}`
                           })
                           .optional()
             } else if (additionalField.type === "boolean") {
                 fieldSchema = additionalField.required
                     ? z.coerce
                           .boolean({
-                              message: `${additionalField.label} ${localization.IS_INVALID}`
+                              message:
+                                  additionalField.errorMessage?.invalid ??
+                                  `${additionalField.label} ${localization.IS_INVALID}`
                           })
                           .refine((val) => val === true, {
-                              message: `${additionalField.label} ${localization.IS_REQUIRED}`
+                              message:
+                                  additionalField.errorMessage?.required ??
+                                  `${additionalField.label} ${localization.IS_REQUIRED}`
                           })
                     : z.coerce
                           .boolean({
-                              message: `${additionalField.label} ${localization.IS_INVALID}`
+                              message:
+                                  additionalField.errorMessage?.invalid ??
+                                  `${additionalField.label} ${localization.IS_INVALID}`
                           })
                           .optional()
             } else {
@@ -219,7 +229,8 @@ export function SignUpForm({
                           .string()
                           .min(
                               1,
-                              `${additionalField.label} ${localization.IS_REQUIRED}`
+                              additionalField.errorMessage?.required ??
+                                  `${additionalField.label} ${localization.IS_REQUIRED}`
                           )
                     : z.string().optional()
             }
@@ -350,7 +361,10 @@ export function SignUpForm({
                     !(await additionalField.validate(value))
                 ) {
                     form.setError(field, {
-                        message: `${additionalField.label} ${localization.IS_INVALID}`
+                        message:
+                            additionalField.errorMessage?.validate ??
+                            additionalField.errorMessage?.invalid ??
+                            `${additionalField.label} ${localization.IS_INVALID}`
                     })
                     return
                 }
@@ -424,6 +438,7 @@ export function SignUpForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(signUp)}
                 noValidate={isHydrated}
                 className={cn("grid w-full gap-6", className, classNames?.base)}

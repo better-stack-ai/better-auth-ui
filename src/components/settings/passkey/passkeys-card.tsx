@@ -81,7 +81,7 @@ export function PasskeysCard({
             />
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(addPasskey)}>
+                <form method="POST" onSubmit={form.handleSubmit(addPasskey)}>
                     <SettingsCard
                         className={className}
                         classNames={classNames}

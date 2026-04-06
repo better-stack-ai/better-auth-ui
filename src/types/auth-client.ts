@@ -1,7 +1,7 @@
+import { apiKeyClient } from "@better-auth/api-key/client"
 import { passkeyClient } from "@better-auth/passkey/client"
 import {
     anonymousClient,
-    apiKeyClient,
     emailOTPClient,
     genericOAuthClient,
     magicLinkClient,
@@ -11,6 +11,7 @@ import {
     twoFactorClient,
     usernameClient
 } from "better-auth/client/plugins"
+
 import { createAuthClient } from "better-auth/react"
 
 export const authClient = createAuthClient({
@@ -21,8 +22,8 @@ export const authClient = createAuthClient({
     baseURL: "http://localhost",
     plugins: [
         apiKeyClient(),
-        multiSessionClient(),
         passkeyClient(),
+        multiSessionClient(),
         oneTapClient({
             clientId: ""
         }),

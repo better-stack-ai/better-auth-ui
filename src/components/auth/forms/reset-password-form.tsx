@@ -142,6 +142,7 @@ export function ResetPasswordForm({
     return (
         <Form {...form}>
             <form
+                method="POST"
                 onSubmit={form.handleSubmit(resetPassword)}
                 className={cn("grid w-full gap-6", className, classNames?.base)}
             >

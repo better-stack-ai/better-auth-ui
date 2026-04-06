@@ -153,7 +153,10 @@ function OrganizationNameForm({
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(updateOrganizationName)}>
+            <form
+                method="POST"
+                onSubmit={form.handleSubmit(updateOrganizationName)}
+            >
                 <SettingsCard
                     className={className}
                     classNames={classNames}

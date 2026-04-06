@@ -28,14 +28,14 @@ export function ApiKeysCard({
 
     localization = { ...contextLocalization, ...localization }
 
-    const { data: apiKeys, isPending, refetch } = useListApiKeys()
+    const { data: apiKeysRes, isPending, refetch } = useListApiKeys()
 
     // Filter API keys by organizationId
     const filteredApiKeys = useMemo(() => {
-        return apiKeys?.filter(
+        return apiKeysRes?.apiKeys?.filter(
             (apiKey) => organizationId === apiKey.metadata?.organizationId
         )
-    }, [apiKeys, organizationId])
+    }, [apiKeysRes, organizationId])
 
     const [createDialogOpen, setCreateDialogOpen] = useState(false)
     const [displayDialogOpen, setDisplayDialogOpen] = useState(false)
