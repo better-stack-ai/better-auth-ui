@@ -15,10 +15,10 @@ importers:
         specifier: ^1.1.21
         version: 1.1.21
       '@btst/stack':
-        specifier: '>=2.10.0'
-        version: 2.10.0(66ee3b71f5025bc77f47697f57e21f48)
+        specifier: '>=2.11.0'
+        version: 2.11.2(66ee3b71f5025bc77f47697f57e21f48)
       '@btst/yar':
-        specifier: ^1.1.1
+        specifier: ^1.2.0
         version: 1.2.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)
       '@captchafox/react':
         specifier: ^1.10.0
@@ -456,8 +456,8 @@ packages:
   '@btst/db@2.1.1':
     resolution: {integrity: sha512-TsD09uB89HY741C/E5MaA9Ny7biYrUBwGtEwEXJiQREIOFHW7CcrTYI4dkYZphLZ8FpcpGJ2NJ1/Owfq4Qt67A==}
 
-  '@btst/stack@2.10.0':
-    resolution: {integrity: sha512-fLPu9sCaC7wIPYo7KMsRQ4Igpcj1qzZ9UwabsvXBEWPoYYA5FicE2nj7rZaUGVOuNKM1pGzQ4KFe+oBhBnUIvw==}
+  '@btst/stack@2.11.2':
+    resolution: {integrity: sha512-Qp/2gtrHJXuPXXu3+jnHfDdgq6FZP3FqdAEIzY1WqAkxRybAgpwOIs1TqFdXFkGEle1YgYqaNYRIjiyi6gof1g==}
     peerDependencies:
       '@ai-sdk/react': '>=2.0.0'
       '@aws-sdk/client-s3': '>=3.0.0'
@@ -4568,7 +4568,7 @@ snapshots:
       - vitest
       - vue
 
-  '@btst/stack@2.10.0(66ee3b71f5025bc77f47697f57e21f48)':
+  '@btst/stack@2.11.2(66ee3b71f5025bc77f47697f57e21f48)':
     dependencies:
       '@ai-sdk/react': 3.0.147(react@19.1.0)(zod@4.2.1)
       '@btst/db': 2.1.1(6fa08b547212446b640d2a87b113790b)
