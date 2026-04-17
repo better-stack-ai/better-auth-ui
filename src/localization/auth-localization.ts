@@ -525,6 +525,9 @@ export const authLocalization = {
     /** @default "Username" */
     USERNAME: "Username",
 
+    /** @default "Username is available" */
+    USERNAME_AVAILABLE: "Username is available",
+
     /** @default "Enter the username you want to use to log in." */
     USERNAME_DESCRIPTION: "Enter the username you want to use to log in.",
 
@@ -533,6 +536,9 @@ export const authLocalization = {
 
     /** @default "Username" */
     USERNAME_PLACEHOLDER: "Username",
+
+    /** @default "Username is already taken. Please try another." */
+    USERNAME_TAKEN: "Username is already taken. Please try another.",
 
     /** @default "(Optional)" */
     OPTIONAL_BRACKETS: "(Optional)",

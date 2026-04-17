@@ -31,6 +31,12 @@ export type CredentialsOptions = {
     username?: boolean
 
     /**
+     * Check username availability on sign-up in real-time
+     * @default false
+     */
+    isUsernameAvailable?: boolean
+
+    /**
      * Make username required when username is enabled
      * @default true
      */

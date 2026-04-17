@@ -2,7 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { BetterFetchOption } from "better-auth/react"
-import { Loader2, Trash2Icon, UploadCloudIcon } from "lucide-react"
+import {
+    CheckIcon,
+    Loader2,
+    Trash2Icon,
+    UploadCloudIcon,
+    XIcon
+} from "lucide-react"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -104,6 +110,7 @@ export function SignUpForm({
     const confirmPasswordEnabled = credentials?.confirmPassword
     const usernameEnabled = credentials?.username
     const usernameRequired = credentials?.usernameRequired ?? true
+    const checkUsernameAvailable = credentials?.isUsernameAvailable
     const contextPasswordValidation = credentials?.passwordValidation
     const signUpFields = signUpOptions?.fields
 
@@ -114,6 +121,15 @@ export function SignUpForm({
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [avatarImage, setAvatarImage] = useState<string | null>(null)
     const [uploadingAvatar, setUploadingAvatar] = useState(false)
+
+    // Username availability check state
+    const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
+        null
+    )
+    const [checkingUsername, setCheckingUsername] = useState(false)
+    const usernameCheckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null
+    )
 
     const getRedirectTo = useCallback(
         () => redirectTo || getSearchParam("redirectTo") || contextRedirectTo,
@@ -289,6 +305,14 @@ export function SignUpForm({
         setIsSubmitting?.(form.formState.isSubmitting || transitionPending)
     }, [form.formState.isSubmitting, transitionPending, setIsSubmitting])
 
+    useEffect(() => {
+        return () => {
+            if (usernameCheckTimerRef.current) {
+                clearTimeout(usernameCheckTimerRef.current)
+            }
+        }
+    }, [])
+
     const handleAvatarChange = async (file: File) => {
         if (!avatar) return
 
@@ -338,6 +362,37 @@ export function SignUpForm({
     }
 
     const openFileDialog = () => fileInputRef.current?.click()
+
+    const handleUsernameChange = (value: string) => {
+        if (!checkUsernameAvailable || !usernameEnabled) return
+
+        setUsernameAvailable(null)
+
+        if (usernameCheckTimerRef.current) {
+            clearTimeout(usernameCheckTimerRef.current)
+        }
+
+        const trimmed = value.trim()
+        if (!trimmed) return
+
+        usernameCheckTimerRef.current = setTimeout(async () => {
+            setCheckingUsername(true)
+            try {
+                // biome-ignore lint/suspicious/noExplicitAny: authClient is typed generically
+                const client = authClient as any
+                const result = await client.isUsernameAvailable?.({
+                    username: trimmed
+                })
+                if (result?.data?.available !== undefined) {
+                    setUsernameAvailable(result.data.available as boolean)
+                }
+            } catch {
+                setUsernameAvailable(null)
+            } finally {
+                setCheckingUsername(false)
+            }
+        }, 500)
+    }
 
     async function signUp({
         email,
@@ -603,17 +658,61 @@ export function SignUpForm({
                                 </FormLabel>
 
                                 <FormControl>
-                                    <Input
-                                        autoComplete="username"
-                                        className={classNames?.input}
-                                        placeholder={
-                                            localization.USERNAME_PLACEHOLDER
-                                        }
-                                        disabled={isSubmitting}
-                                        {...field}
-                                        value={field.value as string}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            autoComplete="username"
+                                            className={cn(
+                                                classNames?.input,
+                                                checkUsernameAvailable && "pr-9"
+                                            )}
+                                            placeholder={
+                                                localization.USERNAME_PLACEHOLDER
+                                            }
+                                            disabled={isSubmitting}
+                                            {...field}
+                                            value={field.value as string}
+                                            onChange={(e) => {
+                                                field.onChange(e)
+                                                handleUsernameChange(
+                                                    e.target.value
+                                                )
+                                            }}
+                                        />
+                                        {checkUsernameAvailable &&
+                                            (field.value as string)?.trim() && (
+                                                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                                    {checkingUsername ? (
+                                                        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                                                    ) : usernameAvailable ===
+                                                      true ? (
+                                                        <CheckIcon className="size-4 text-green-500" />
+                                                    ) : usernameAvailable ===
+                                                      false ? (
+                                                        <XIcon className="size-4 text-destructive" />
+                                                    ) : null}
+                                                </div>
+                                            )}
+                                    </div>
                                 </FormControl>
+
+                                {checkUsernameAvailable &&
+                                    usernameAvailable === false &&
+                                    !form.formState.errors.username && (
+                                        <p
+                                            className={cn(
+                                                "font-medium text-destructive text-sm",
+                                                classNames?.error
+                                            )}
+                                        >
+                                            {localization.USERNAME_TAKEN}
+                                        </p>
+                                    )}
+                                {checkUsernameAvailable &&
+                                    usernameAvailable === true && (
+                                        <p className="text-green-500 text-sm">
+                                            {localization.USERNAME_AVAILABLE}
+                                        </p>
+                                    )}
 
                                 <FormMessage className={classNames?.error} />
                             </FormItem>
