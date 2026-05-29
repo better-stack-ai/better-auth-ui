@@ -139,6 +139,12 @@ export interface AuthPluginOverrides {
      */
     twoFactor?: ("otp" | "totp")[]
     /**
+     * Allow users to link multiple accounts from the same social provider.
+     * When false, providers already linked to the account are hidden from the available-to-link list.
+     * @default true
+     */
+    multipleAccountsPerProvider?: boolean
+    /**
      * Enable or disable Multi Session support
      * @default false
      */

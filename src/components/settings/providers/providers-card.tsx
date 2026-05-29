@@ -35,6 +35,7 @@ export function ProvidersCard({
     const {
         hooks: { useListAccounts },
         localization: contextLocalization,
+        multipleAccountsPerProvider,
         social,
         genericOAuth
     } = useContext(AuthUIContext)
@@ -47,6 +48,13 @@ export function ProvidersCard({
         isPending = result.isPending
         refetch = result.refetch
     }
+
+    const linkedProviderIds = new Set(accounts?.map((a) => a.providerId))
+
+    const availableSocialProviders =
+        multipleAccountsPerProvider === false
+            ? social?.providers?.filter((p) => !linkedProviderIds.has(p))
+            : social?.providers
 
     return (
         <SettingsCard
@@ -91,7 +99,7 @@ export function ProvidersCard({
                             )
                         })}
 
-                        {social?.providers?.map((provider) => {
+                        {availableSocialProviders?.map((provider) => {
                             const socialProvider = socialProviders.find(
                                 (socialProvider) =>
                                     socialProvider.provider === provider

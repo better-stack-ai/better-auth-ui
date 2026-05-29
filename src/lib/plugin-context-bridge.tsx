@@ -519,6 +519,7 @@ export function BetterAuthPluginProvider({
         passkey: authOverrides.passkey,
         oneTap: authOverrides.oneTap,
         twoFactor: authOverrides.twoFactor,
+        multipleAccountsPerProvider: authOverrides.multipleAccountsPerProvider,
         multiSession: authOverrides.multiSession,
         emailVerification,
         localizeErrors: authOverrides.localizeErrors ?? true,
