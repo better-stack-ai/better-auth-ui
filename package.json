@@ -133,7 +133,7 @@
     },
     "peerDependencies": {
         "@better-auth/passkey": ">=1.6.11",
-        "@btst/stack": ">=2.11.0",
+        "@btst/stack": ">=2.12.1",
         "@btst/yar": "^1.2.0",
         "@captchafox/react": "^1.10.0",
         "@daveyplate/better-auth-tanstack": "^1.3.6",
