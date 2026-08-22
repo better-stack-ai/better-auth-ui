@@ -1,9 +1,9 @@
 import {
     type ClientPlugin,
-    createRoute,
     defineClientPlugin,
     type Route
 } from "@btst/stack/plugins/client"
+import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
 import type { OrganizationViewPageProps } from "../components/organization/organization-view"
 import { organizationViewPaths } from "../lib/view-paths"
@@ -112,20 +112,18 @@ function createAuthMeta(
 export const organizationClientPlugin = (config: OrganizationClientConfig) =>
     definePlugin({
         name: "organization",
-        routes: () => ({
-            organizationSettings: createRoute(
-                `/organization/${organizationViewPaths.SETTINGS}`,
-                () => {
-                    const OrganizationSettingsPage = lazy(() =>
-                        import(
-                            "../components/organization/pages/organization-settings-page"
-                        ).then((m) => ({
-                            default: m.OrganizationSettingsPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationSettingsPage,
+        routes: () =>
+            defineRoutes({
+                organizationSettings: defineRoute(
+                    `/organization/${organizationViewPaths.SETTINGS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/organization/pages/organization-settings-page"
+                            ).then((m) => ({
+                                default: m.OrganizationSettingsPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/organization/${organizationViewPaths.SETTINGS}`,
@@ -133,21 +131,17 @@ export const organizationClientPlugin = (config: OrganizationClientConfig) =>
                             "Manage your organization settings"
                         )
                     }
-                }
-            ),
-            organizationMembers: createRoute(
-                `/organization/${organizationViewPaths.MEMBERS}`,
-                () => {
-                    const OrganizationMembersPage = lazy(() =>
-                        import(
-                            "../components/organization/pages/organization-members-page"
-                        ).then((m) => ({
-                            default: m.OrganizationMembersPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationMembersPage,
+                ),
+                organizationMembers: defineRoute(
+                    `/organization/${organizationViewPaths.MEMBERS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/organization/pages/organization-members-page"
+                            ).then((m) => ({
+                                default: m.OrganizationMembersPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/organization/${organizationViewPaths.MEMBERS}`,
@@ -155,21 +149,17 @@ export const organizationClientPlugin = (config: OrganizationClientConfig) =>
                             "Manage organization members"
                         )
                     }
-                }
-            ),
-            organizationApiKeys: createRoute(
-                `/organization/${organizationViewPaths.API_KEYS}`,
-                () => {
-                    const OrganizationApiKeysPage = lazy(() =>
-                        import(
-                            "../components/organization/pages/organization-api-keys-page"
-                        ).then((m) => ({
-                            default: m.OrganizationApiKeysPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationApiKeysPage,
+                ),
+                organizationApiKeys: defineRoute(
+                    `/organization/${organizationViewPaths.API_KEYS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/organization/pages/organization-api-keys-page"
+                            ).then((m) => ({
+                                default: m.OrganizationApiKeysPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/organization/${organizationViewPaths.API_KEYS}`,
@@ -177,21 +167,17 @@ export const organizationClientPlugin = (config: OrganizationClientConfig) =>
                             "Manage organization API keys"
                         )
                     }
-                }
-            ),
-            organizationTeams: createRoute(
-                `/organization/${organizationViewPaths.TEAMS}`,
-                () => {
-                    const OrganizationTeamsPage = lazy(() =>
-                        import(
-                            "../components/organization/pages/organization-teams-page"
-                        ).then((m) => ({
-                            default: m.OrganizationTeamsPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: OrganizationTeamsPage,
+                ),
+                organizationTeams: defineRoute(
+                    `/organization/${organizationViewPaths.TEAMS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/organization/pages/organization-teams-page"
+                            ).then((m) => ({
+                                default: m.OrganizationTeamsPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/organization/${organizationViewPaths.TEAMS}`,
@@ -199,9 +185,8 @@ export const organizationClientPlugin = (config: OrganizationClientConfig) =>
                             "Manage organization teams"
                         )
                     }
-                }
-            )
-        }),
+                )
+            }),
         sitemap: async () => {
             return []
         }
