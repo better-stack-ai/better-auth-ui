@@ -1,11 +1,20 @@
 "use client"
 
-import { usePluginOverrides } from "@btst/stack/context"
+import {
+    useCan,
+    useIdentity,
+    useNotify,
+    usePluginOverrides,
+    useStack,
+    useTranslate
+} from "@btst/stack/context"
 import { type ReactNode, useMemo } from "react"
-import { toast } from "sonner"
 import { RecaptchaV3 } from "../components/captcha/recaptcha-v3"
 import { useAuthData } from "../hooks/use-auth-data"
-import { authLocalization } from "../localization/auth-localization"
+import {
+    type AuthLocalization,
+    authLocalization
+} from "../localization/auth-localization"
 import type { AccountPluginOverrides } from "../plugins/account-plugin"
 import type { AuthPluginOverrides } from "../plugins/auth-plugin"
 import type { OrganizationPluginOverrides } from "../plugins/organization-plugin"
@@ -19,12 +28,12 @@ import type { DeleteUserOptions } from "../types/delete-user-options"
 import type { GenericOAuthOptions } from "../types/generic-oauth-options"
 import type { Link } from "../types/link"
 import type { OrganizationOptionsContext } from "../types/organization-options"
-import type { RenderToast } from "../types/render-toast"
 import type { SignUpOptions } from "../types/sign-up-options"
 import type { SocialOptions } from "../types/social-options"
 import type { TeamOptionsContext } from "../types/team-options"
 import { AuthUIContext, type AuthUIContextType } from "./auth-ui-provider"
 import { OrganizationRefetcher } from "./organization-refetcher"
+import { createRenderToast } from "./stack-adapters"
 import {
     accountViewPaths,
     authViewPaths,
@@ -45,11 +54,32 @@ const defaultReplace = (href: string) => {
     window.location.replace(href)
 }
 
-const defaultToast: RenderToast = ({ variant = "default", message }) => {
-    if (variant === "default") {
-        toast(message)
-    } else {
-        toast[variant](message)
+function useStackHasPermission(
+    params: Parameters<AuthHooks["useHasPermission"]>[0]
+): ReturnType<AuthHooks["useHasPermission"]> {
+    const permissions = (
+        "permissions" in params ? params.permissions : params.permission
+    ) as Record<string, string[]>
+    const permissionEntries = Object.entries(permissions)
+    const [resource, actions] = permissionEntries[0] ?? []
+    const action = actions?.[0]
+    const isSinglePermission =
+        permissionEntries.length === 1 && actions?.length === 1
+    const organizationId =
+        "organizationId" in params ? params.organizationId : undefined
+    const { can, isPending } = useCan({
+        resource: resource ?? "",
+        action: action ?? "",
+        params: organizationId ? { organizationId } : undefined
+    })
+
+    return {
+        data: {
+            error: null,
+            success: Boolean(isSinglePermission && resource && action && can)
+        },
+        isPending: isSinglePermission && isPending,
+        isRefetching: isSinglePermission && isPending
     }
 }
 
@@ -63,6 +93,11 @@ export function BetterAuthPluginProvider({
 }: {
     children: ReactNode
 }) {
+    const { auth, router } = useStack()
+    const { refetch: refetchIdentity } = useIdentity()
+    const notify = useNotify()
+    const translate = useTranslate()
+
     // Read auth plugin overrides
     const authOverrides = usePluginOverrides<
         AuthPluginOverrides,
@@ -73,11 +108,7 @@ export function BetterAuthPluginProvider({
         redirectTo: "/",
         freshAge: 60 * 60 * 24,
         changeEmail: true,
-        nameRequired: true,
-        Link: DefaultLink,
-        navigate: defaultNavigate,
-        replace: defaultReplace,
-        toast: defaultToast
+        nameRequired: true
     })
 
     // Read account plugin overrides (returns defaults if plugin not registered)
@@ -444,12 +475,33 @@ export function BetterAuthPluginProvider({
     }, [authOverrides.viewPaths])
 
     const localization = useMemo(() => {
-        return { ...authLocalization, ...authOverrides.localization }
-    }, [authOverrides.localization])
+        const merged = { ...authLocalization, ...authOverrides.localization }
+
+        return Object.fromEntries(
+            Object.entries(merged).map(([key, defaultValue]) => [
+                key,
+                translate(`better-auth-ui.${key}`, defaultValue)
+            ])
+        ) as AuthLocalization
+    }, [authOverrides.localization, translate])
+
+    const renderToast = useMemo(() => createRenderToast(notify), [notify])
 
     const hooks = useMemo(() => {
-        return { ...defaultHooks, ...authOverrides.hooks }
-    }, [defaultHooks, authOverrides.hooks])
+        return {
+            ...defaultHooks,
+            ...authOverrides.hooks,
+            ...(auth?.can ? { useHasPermission: useStackHasPermission } : {})
+        }
+    }, [auth, defaultHooks, authOverrides.hooks])
+
+    const onSessionChange = useMemo(
+        () => async () => {
+            await refetchIdentity()
+            await router?.refresh?.()
+        },
+        [refetchIdentity, router?.refresh]
+    )
 
     const mutators = useMemo(() => {
         return { ...defaultMutators, ...authOverrides.mutators }
@@ -504,13 +556,11 @@ export function BetterAuthPluginProvider({
         account,
         signUp,
         social,
-        // Shared navigation — account/org can legitimately override these via ...authConfig
-        toast: authOverrides.toast || defaultToast,
-        navigate: authOverrides.navigate || defaultNavigate,
-        replace:
-            authOverrides.replace || authOverrides.navigate || defaultReplace,
+        toast: renderToast,
+        navigate: router?.navigate || defaultNavigate,
+        replace: router?.navigate || defaultReplace,
         viewPaths,
-        Link: authOverrides.Link || DefaultLink,
+        Link: (router?.Link as typeof DefaultLink | undefined) || DefaultLink,
         apiKey: authOverrides.apiKey,
         gravatar: authOverrides.gravatar,
         additionalFields: authOverrides.additionalFields,
@@ -524,7 +574,7 @@ export function BetterAuthPluginProvider({
         localizeErrors: authOverrides.localizeErrors ?? true,
         persistClient: authOverrides.persistClient,
         optimistic: authOverrides.optimistic,
-        onSessionChange: authOverrides.onSessionChange
+        onSessionChange
     }
 
     return (

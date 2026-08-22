@@ -17,7 +17,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // ─── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock("@btst/stack/context", () => ({
-    usePluginOverrides: vi.fn()
+    useCan: vi.fn(),
+    useIdentity: vi.fn(),
+    useNotify: vi.fn(),
+    usePluginOverrides: vi.fn(),
+    useStack: vi.fn(),
+    useTranslate: vi.fn()
 }))
 
 // Capture queryFns passed to useAuthData so we can call them directly in tests.
@@ -51,7 +56,14 @@ vi.mock("../organization-refetcher", () => ({
 
 // ─── imports after mocks ──────────────────────────────────────────────────────
 
-import { usePluginOverrides } from "@btst/stack/context"
+import {
+    useCan,
+    useIdentity,
+    useNotify,
+    usePluginOverrides,
+    useStack,
+    useTranslate
+} from "@btst/stack/context"
 import { AuthUIContext, type AuthUIContextType } from "../auth-ui-provider"
 import { BetterAuthPluginProvider } from "../plugin-context-bridge"
 
@@ -132,6 +144,26 @@ function renderBridge(
 
 beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useStack).mockReturnValue({
+        basePath: "/p",
+        overrides: {},
+        router: {}
+    })
+    vi.mocked(useCan).mockReturnValue({ can: true, isPending: false })
+    vi.mocked(useIdentity).mockReturnValue({
+        identity: null,
+        isPending: false,
+        refetch: vi.fn()
+    })
+    vi.mocked(useNotify).mockReturnValue({
+        error: vi.fn(),
+        info: vi.fn(),
+        success: vi.fn(),
+        warning: vi.fn()
+    })
+    vi.mocked(useTranslate).mockReturnValue(
+        (_key, defaultValue) => defaultValue
+    )
     // biome-ignore lint/suspicious/useIterableCallbackReturn: acceptable use of forEach
     Object.keys(capturedQueryFns).forEach((k) => delete capturedQueryFns[k])
 })
@@ -555,10 +587,138 @@ describe("hooks — useListTeamMembers uses POST (not GET)", () => {
         const ctx = renderBridge()
         ctx.hooks.useListUserTeams()
 
-        const qfn = capturedQueryFns["listUserTeams"]
+        const qfn = capturedQueryFns.listUserTeams
         expect(qfn).toBeDefined()
         qfn()
 
         expect(mockFetch).toHaveBeenCalledWith("/organization/list-user-teams")
+    })
+})
+
+describe("BTST v3 top-level providers", () => {
+    it("routes organization permission hooks through stack can", () => {
+        vi.mocked(useStack).mockReturnValue({
+            auth: { can: vi.fn(), getIdentity: vi.fn() },
+            basePath: "/p",
+            overrides: {},
+            router: {}
+        })
+
+        const context = renderBridge()
+        const permission = context.hooks.useHasPermission({
+            organizationId: "org-1",
+            permissions: { member: ["update"] }
+        })
+
+        expect(permission.data?.success).toBe(true)
+        expect(useCan).toHaveBeenCalledWith({
+            resource: "member",
+            action: "update",
+            params: { organizationId: "org-1" }
+        })
+    })
+
+    it("preserves Better Auth permissions without an explicit stack can mapping", () => {
+        const useHasPermission = vi.fn(() => ({
+            data: { error: null, success: false },
+            isPending: false,
+            isRefetching: false
+        }))
+        vi.mocked(useStack).mockReturnValue({
+            auth: { getIdentity: vi.fn() },
+            basePath: "/p",
+            overrides: {},
+            router: {}
+        })
+
+        const context = renderBridge({ hooks: { useHasPermission } })
+        const permission = context.hooks.useHasPermission({
+            organizationId: "org-1",
+            permissions: { member: ["update"] }
+        })
+
+        expect(permission.data?.success).toBe(false)
+        expect(useHasPermission).toHaveBeenCalledOnce()
+        expect(useCan).not.toHaveBeenCalled()
+    })
+
+    it("fails closed for permission batches that stack cannot represent", () => {
+        vi.mocked(useStack).mockReturnValue({
+            auth: { can: vi.fn(), getIdentity: vi.fn() },
+            basePath: "/p",
+            overrides: {},
+            router: {}
+        })
+
+        const context = renderBridge()
+        const permission = context.hooks.useHasPermission({
+            organizationId: "org-1",
+            permissions: { member: ["update", "delete"] }
+        })
+
+        expect(permission.data?.success).toBe(false)
+        expect(permission.isPending).toBe(false)
+    })
+
+    it("sources navigation and refreshes identity from top-level providers", async () => {
+        const navigate = vi.fn()
+        const refresh = vi.fn()
+        const refetch = vi.fn()
+        const StackLink = () => null
+        vi.mocked(useIdentity).mockReturnValue({
+            identity: null,
+            isPending: false,
+            refetch
+        })
+        vi.mocked(useStack).mockReturnValue({
+            basePath: "/p",
+            overrides: {},
+            router: { Link: StackLink, navigate, refresh }
+        })
+
+        const context = renderBridge({
+            Link: () => null,
+            navigate: vi.fn(),
+            onSessionChange: vi.fn()
+        })
+
+        context.navigate("/account")
+        await context.onSessionChange?.()
+        expect(context.Link).toBe(StackLink)
+        expect(navigate).toHaveBeenCalledWith("/account")
+        expect(refetch).toHaveBeenCalledOnce()
+        expect(refresh).toHaveBeenCalledOnce()
+    })
+
+    it("routes toast rendering through the top-level notify provider", () => {
+        const notify = {
+            error: vi.fn(),
+            info: vi.fn(),
+            success: vi.fn(),
+            warning: vi.fn()
+        }
+        vi.mocked(useNotify).mockReturnValue(notify)
+
+        const context = renderBridge({ toast: vi.fn() })
+        context.toast({ variant: "success", message: "Saved" })
+        context.toast({ message: "Heads up" })
+
+        expect(notify.success).toHaveBeenCalledWith("Saved")
+        expect(notify.info).toHaveBeenCalledWith("Heads up")
+    })
+
+    it("translates existing localization values through stack i18n", () => {
+        const translate = vi.fn((key: string, defaultValue: string) =>
+            key === "better-auth-ui.SIGN_IN" ? "Entrar" : defaultValue
+        )
+        vi.mocked(useTranslate).mockReturnValue(translate)
+
+        const context = renderBridge()
+
+        expect(context.localization.SIGN_IN).toBe("Entrar")
+        expect(translate).toHaveBeenCalledWith(
+            "better-auth-ui.SIGN_IN",
+            expect.any(String)
+        )
     })
 })

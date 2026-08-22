@@ -18,8 +18,6 @@ import type { CaptchaOptions } from "../types/captcha-options"
 import type { CredentialsOptions } from "../types/credentials-options"
 import type { GenericOAuthOptions } from "../types/generic-oauth-options"
 import type { GravatarOptions } from "../types/gravatar-options"
-import type { Link } from "../types/link"
-import type { RenderToast } from "../types/render-toast"
 import type { SignUpOptions } from "../types/sign-up-options"
 import type { SocialOptions } from "../types/social-options"
 
@@ -56,26 +54,6 @@ export interface AuthPluginOverrides {
      * @remarks AuthClient
      */
     authClient: AnyAuthClient
-    /**
-     * Custom Link component for navigation
-     * @default <a>
-     */
-    Link?: Link
-    /**
-     * Navigate to a new URL
-     * @default window.location.href
-     */
-    navigate?: (href: string) => void
-    /**
-     * Replace the current URL
-     * @default navigate
-     */
-    replace?: (href: string) => void
-    /**
-     * Render custom Toasts
-     * @default Sonner
-     */
-    toast?: RenderToast
     /**
      * Customize the Localization strings
      */
@@ -212,10 +190,6 @@ export interface AuthPluginOverrides {
      * ADVANCED: Custom mutators for updating auth data
      */
     mutators?: Partial<AuthMutators>
-    /**
-     * Called whenever the Session changes
-     */
-    onSessionChange?: () => void | Promise<void>
     /**
      * Customize the paths for the auth views
      */

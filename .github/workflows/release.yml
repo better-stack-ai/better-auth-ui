@@ -3,9 +3,20 @@ name: Better Auth UI Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing v* tag to publish
+        required: true
+        type: string
+      prerelease:
+        description: Publish with the npm next dist-tag
+        required: true
+        default: true
+        type: boolean
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
@@ -15,10 +26,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          ref: ${{ github.event.release.tag_name || inputs.release_tag }}
           fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          version: 10.26.2
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -26,8 +40,8 @@ jobs:
           node-version: '22.18.0'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Update npm
-        run: npm install -g npm@latest
+      - name: Install npm with trusted publishing support
+        run: npm install -g npm@11.17.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -38,15 +52,18 @@ jobs:
       - name: Resolve release metadata
         id: release-metadata
         env:
-          GITHUB_PRERELEASE: ${{ github.event.release.prerelease }}
+          GITHUB_PRERELEASE: ${{ github.event.release.prerelease || inputs.prerelease }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
+          set -euo pipefail
+
           PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ -n "${{ github.event.release.tag_name }}" ]; then
-            RAW_TAG="${{ github.event.release.tag_name }}"
-          else
-            RAW_TAG="${GITHUB_REF#refs/tags/}"
+          if [[ ! "$RELEASE_TAG" =~ ^v ]]; then
+            echo "Release tag must start with v; found $RELEASE_TAG"
+            exit 1
           fi
-          TAG_VERSION="${RAW_TAG#v}"
+
+          TAG_VERSION="${RELEASE_TAG#v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
             exit 1
@@ -62,4 +79,70 @@ jobs:
           echo "Publishing @btst/better-auth-ui@$PKG_VERSION with dist-tag '$NPM_DIST_TAG'"
 
       - name: Publish to NPM
-        run: npm publish --access public --tag "${{ steps.release-metadata.outputs.npm_dist_tag }}"
+        env:
+          NPM_DIST_TAG: ${{ steps.release-metadata.outputs.npm_dist_tag }}
+          PKG_VERSION: ${{ steps.release-metadata.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          if npm view "@btst/better-auth-ui@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "@btst/better-auth-ui@$PKG_VERSION is already published; skipping."
+            exit 0
+          fi
+          npm publish --access public --provenance --tag "$NPM_DIST_TAG"
+
+      - name: Verify published package
+        env:
+          NPM_DIST_TAG: ${{ steps.release-metadata.outputs.npm_dist_tag }}
+          PKG_VERSION: ${{ steps.release-metadata.outputs.package_version }}
+        run: |
+          set -euo pipefail
+
+          PUBLISHED_VERSION=""
+          for attempt in {1..12}; do
+            PUBLISHED_VERSION=$(npm view "@btst/better-auth-ui@$NPM_DIST_TAG" version 2>/dev/null || true)
+            if [ "$PUBLISHED_VERSION" = "$PKG_VERSION" ]; then
+              break
+            fi
+            echo "Waiting for npm to resolve $NPM_DIST_TAG to $PKG_VERSION (attempt $attempt/12)"
+            sleep 10
+          done
+
+          if [ "$PUBLISHED_VERSION" != "$PKG_VERSION" ]; then
+            echo "@btst/better-auth-ui@$NPM_DIST_TAG resolves to ${PUBLISHED_VERSION:-nothing}, expected $PKG_VERSION"
+            exit 1
+          fi
+
+          INTEGRITY=$(npm view "@btst/better-auth-ui@$PKG_VERSION" dist.integrity)
+          if [ -z "$INTEGRITY" ]; then
+            echo "Published package integrity metadata is missing"
+            exit 1
+          fi
+
+          LATEST_SUMMARY=""
+          if [ "$NPM_DIST_TAG" = "next" ]; then
+            LATEST_VERSION=$(npm view "@btst/better-auth-ui@latest" version 2>/dev/null || true)
+            if [ "$LATEST_VERSION" = "$PKG_VERSION" ] || [[ "$LATEST_VERSION" == *-* ]]; then
+              echo "Prerelease publication must not move latest to a prerelease; found $LATEST_VERSION"
+              exit 1
+            fi
+            LATEST_SUMMARY="@btst/better-auth-ui@latest remains at ${LATEST_VERSION:-no published version}"
+          fi
+
+          {
+            echo "### npm release"
+            echo ""
+            echo "@btst/better-auth-ui@$PKG_VERSION published with dist-tag $NPM_DIST_TAG."
+            echo "Integrity: \`$INTEGRITY\`"
+            if [ -n "$LATEST_SUMMARY" ]; then
+              echo "$LATEST_SUMMARY"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload npm logs on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: npm-debug-logs
+          path: /home/runner/.npm/_logs/
+          retention-days: 7
