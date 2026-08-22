@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version: '22.18.0'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Update npm
@@ -35,7 +35,10 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Verify tag matches package version
+      - name: Resolve release metadata
+        id: release-metadata
+        env:
+          GITHUB_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           if [ -n "${{ github.event.release.tag_name }}" ]; then
@@ -49,6 +52,14 @@ jobs:
             exit 1
           fi
 
-      - name: Publish to NPM
-        run: npm publish --access public
+          NPM_DIST_TAG=latest
+          if [[ "$PKG_VERSION" == *-* || "$GITHUB_PRERELEASE" == "true" ]]; then
+            NPM_DIST_TAG=next
+          fi
 
+          echo "package_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "npm_dist_tag=$NPM_DIST_TAG" >> "$GITHUB_OUTPUT"
+          echo "Publishing @btst/better-auth-ui@$PKG_VERSION with dist-tag '$NPM_DIST_TAG'"
+
+      - name: Publish to NPM
+        run: npm publish --access public --tag "${{ steps.release-metadata.outputs.npm_dist_tag }}"

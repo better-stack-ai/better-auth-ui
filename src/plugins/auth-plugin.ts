@@ -1,9 +1,9 @@
 import {
     type ClientPlugin,
-    createRoute,
     defineClientPlugin,
     type Route
 } from "@btst/stack/plugins/client"
+import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
 import type { AuthViewProps } from "../components/auth/auth-view"
 import type { AuthViewPaths } from "../lib/view-paths"
@@ -292,58 +292,48 @@ function createAuthMeta(
 export const authClientPlugin = (config: AuthClientConfig) =>
     definePlugin({
         name: "auth",
-        routes: () => ({
-            signIn: createRoute(`/auth/${authViewPaths.SIGN_IN}`, () => {
-                const SignInPage = lazy(() =>
-                    import("../components/auth/pages/sign-in-page").then(
-                        (m) => ({
-                            default: m.SignInPage
-                        })
-                    )
-                )
-
-                return {
-                    PageComponent: SignInPage,
+        routes: () =>
+            defineRoutes({
+                signIn: defineRoute(`/auth/${authViewPaths.SIGN_IN}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/sign-in-page").then(
+                            (m) => ({
+                                default: m.SignInPage
+                            })
+                        )
+                    ),
                     meta: createAuthMeta(
                         config,
                         `/auth/${authViewPaths.SIGN_IN}`,
                         "Sign In",
                         "Sign in to your account"
                     )
-                }
-            }),
-            signUp: createRoute(`/auth/${authViewPaths.SIGN_UP}`, () => {
-                const SignUpPage = lazy(() =>
-                    import("../components/auth/pages/sign-up-page").then(
-                        (m) => ({
-                            default: m.SignUpPage
-                        })
-                    )
-                )
-
-                return {
-                    PageComponent: SignUpPage,
+                }),
+                signUp: defineRoute(`/auth/${authViewPaths.SIGN_UP}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/sign-up-page").then(
+                            (m) => ({
+                                default: m.SignUpPage
+                            })
+                        )
+                    ),
                     meta: createAuthMeta(
                         config,
                         `/auth/${authViewPaths.SIGN_UP}`,
                         "Sign Up",
                         "Create a new account"
                     )
-                }
-            }),
-            forgotPassword: createRoute(
-                `/auth/${authViewPaths.FORGOT_PASSWORD}`,
-                () => {
-                    const ForgotPasswordPage = lazy(() =>
-                        import(
-                            "../components/auth/pages/forgot-password-page"
-                        ).then((m) => ({
-                            default: m.ForgotPasswordPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: ForgotPasswordPage,
+                }),
+                forgotPassword: defineRoute(
+                    `/auth/${authViewPaths.FORGOT_PASSWORD}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/auth/pages/forgot-password-page"
+                            ).then((m) => ({
+                                default: m.ForgotPasswordPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/auth/${authViewPaths.FORGOT_PASSWORD}`,
@@ -351,21 +341,17 @@ export const authClientPlugin = (config: AuthClientConfig) =>
                             "Reset your password"
                         )
                     }
-                }
-            ),
-            resetPassword: createRoute(
-                `/auth/${authViewPaths.RESET_PASSWORD}`,
-                () => {
-                    const ResetPasswordPage = lazy(() =>
-                        import(
-                            "../components/auth/pages/reset-password-page"
-                        ).then((m) => ({
-                            default: m.ResetPasswordPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: ResetPasswordPage,
+                ),
+                resetPassword: defineRoute(
+                    `/auth/${authViewPaths.RESET_PASSWORD}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/auth/pages/reset-password-page"
+                            ).then((m) => ({
+                                default: m.ResetPasswordPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/auth/${authViewPaths.RESET_PASSWORD}`,
@@ -373,78 +359,62 @@ export const authClientPlugin = (config: AuthClientConfig) =>
                             "Enter your new password"
                         )
                     }
-                }
-            ),
-            magicLink: createRoute(`/auth/${authViewPaths.MAGIC_LINK}`, () => {
-                const MagicLinkPage = lazy(() =>
-                    import("../components/auth/pages/magic-link-page").then(
-                        (m) => ({
-                            default: m.MagicLinkPage
-                        })
-                    )
-                )
-
-                return {
-                    PageComponent: MagicLinkPage,
+                ),
+                magicLink: defineRoute(`/auth/${authViewPaths.MAGIC_LINK}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/magic-link-page").then(
+                            (m) => ({
+                                default: m.MagicLinkPage
+                            })
+                        )
+                    ),
                     meta: createAuthMeta(
                         config,
                         `/auth/${authViewPaths.MAGIC_LINK}`,
                         "Magic Link",
                         "Sign in with magic link"
                     )
-                }
-            }),
-            emailOtp: createRoute(`/auth/${authViewPaths.EMAIL_OTP}`, () => {
-                const EmailOtpPage = lazy(() =>
-                    import("../components/auth/pages/email-otp-page").then(
-                        (m) => ({
-                            default: m.EmailOtpPage
-                        })
-                    )
-                )
-
-                return {
-                    PageComponent: EmailOtpPage,
+                }),
+                emailOtp: defineRoute(`/auth/${authViewPaths.EMAIL_OTP}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/email-otp-page").then(
+                            (m) => ({
+                                default: m.EmailOtpPage
+                            })
+                        )
+                    ),
                     meta: createAuthMeta(
                         config,
                         `/auth/${authViewPaths.EMAIL_OTP}`,
                         "Email Code",
                         "Sign in with email code"
                     )
-                }
-            }),
-            twoFactor: createRoute(`/auth/${authViewPaths.TWO_FACTOR}`, () => {
-                const TwoFactorPage = lazy(() =>
-                    import("../components/auth/pages/two-factor-page").then(
-                        (m) => ({
-                            default: m.TwoFactorPage
-                        })
-                    )
-                )
-
-                return {
-                    PageComponent: TwoFactorPage,
+                }),
+                twoFactor: defineRoute(`/auth/${authViewPaths.TWO_FACTOR}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/two-factor-page").then(
+                            (m) => ({
+                                default: m.TwoFactorPage
+                            })
+                        )
+                    ),
                     meta: createAuthMeta(
                         config,
                         `/auth/${authViewPaths.TWO_FACTOR}`,
                         "Two-Factor Authentication",
                         "Enter your verification code"
                     )
-                }
-            }),
-            recoverAccount: createRoute(
-                `/auth/${authViewPaths.RECOVER_ACCOUNT}`,
-                () => {
-                    const RecoverAccountPage = lazy(() =>
-                        import(
-                            "../components/auth/pages/recover-account-page"
-                        ).then((m) => ({
-                            default: m.RecoverAccountPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: RecoverAccountPage,
+                }),
+                recoverAccount: defineRoute(
+                    `/auth/${authViewPaths.RECOVER_ACCOUNT}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/auth/pages/recover-account-page"
+                            ).then((m) => ({
+                                default: m.RecoverAccountPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/auth/${authViewPaths.RECOVER_ACCOUNT}`,
@@ -452,63 +422,47 @@ export const authClientPlugin = (config: AuthClientConfig) =>
                             "Recover your account with a backup code"
                         )
                     }
-                }
-            ),
-            callback: createRoute(`/auth/${authViewPaths.CALLBACK}`, () => {
-                const CallbackPage = lazy(() =>
-                    import("../components/auth/pages/callback-page").then(
-                        (m) => ({
-                            default: m.CallbackPage
-                        })
+                ),
+                callback: defineRoute(`/auth/${authViewPaths.CALLBACK}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/callback-page").then(
+                            (m) => ({
+                                default: m.CallbackPage
+                            })
+                        )
                     )
-                )
-
-                return {
-                    PageComponent: CallbackPage
-                }
-            }),
-            signOut: createRoute(`/auth/${authViewPaths.SIGN_OUT}`, () => {
-                const SignOutPage = lazy(() =>
-                    import("../components/auth/pages/sign-out-page").then(
-                        (m) => ({
-                            default: m.SignOutPage
-                        })
+                }),
+                signOut: defineRoute(`/auth/${authViewPaths.SIGN_OUT}`, {
+                    page: lazy(() =>
+                        import("../components/auth/pages/sign-out-page").then(
+                            (m) => ({
+                                default: m.SignOutPage
+                            })
+                        )
                     )
-                )
-
-                return {
-                    PageComponent: SignOutPage
-                }
-            }),
-            acceptInvitation: createRoute(
-                `/auth/${authViewPaths.ACCEPT_INVITATION}`,
-                () => {
-                    const AcceptInvitationPage = lazy(() =>
-                        import(
-                            "../components/auth/pages/accept-invitation-page"
-                        ).then((m) => ({
-                            default: m.AcceptInvitationPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AcceptInvitationPage
+                }),
+                acceptInvitation: defineRoute(
+                    `/auth/${authViewPaths.ACCEPT_INVITATION}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/auth/pages/accept-invitation-page"
+                            ).then((m) => ({
+                                default: m.AcceptInvitationPage
+                            }))
+                        )
                     }
-                }
-            ),
-            emailVerification: createRoute(
-                `/auth/${authViewPaths.EMAIL_VERIFICATION}`,
-                () => {
-                    const EmailVerificationPage = lazy(() =>
-                        import(
-                            "../components/auth/pages/email-verification-page"
-                        ).then((m) => ({
-                            default: m.EmailVerificationPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: EmailVerificationPage,
+                ),
+                emailVerification: defineRoute(
+                    `/auth/${authViewPaths.EMAIL_VERIFICATION}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/auth/pages/email-verification-page"
+                            ).then((m) => ({
+                                default: m.EmailVerificationPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/auth/${authViewPaths.EMAIL_VERIFICATION}`,
@@ -516,9 +470,8 @@ export const authClientPlugin = (config: AuthClientConfig) =>
                             "Verify your email address"
                         )
                     }
-                }
-            )
-        }),
+                )
+            }),
         sitemap: async () => {
             // Only include public-facing auth pages in sitemap
             return [

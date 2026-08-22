@@ -1,9 +1,9 @@
 import {
     type ClientPlugin,
-    createRoute,
     defineClientPlugin,
     type Route
 } from "@btst/stack/plugins/client"
+import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
 import type { AccountViewProps } from "../components/account/account-view"
 import { accountViewPaths } from "../lib/view-paths"
@@ -118,21 +118,19 @@ function createAuthMeta(
 export const accountClientPlugin = (config: AccountClientConfig) =>
     definePlugin({
         name: "account",
-        routes: () => ({
-            // Account views
-            accountSettings: createRoute(
-                `/account/${accountViewPaths.SETTINGS}`,
-                () => {
-                    const AccountSettingsPage = lazy(() =>
-                        import(
-                            "../components/account/pages/account-settings-page"
-                        ).then((m) => ({
-                            default: m.AccountSettingsPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AccountSettingsPage,
+        routes: () =>
+            defineRoutes({
+                // Account views
+                accountSettings: defineRoute(
+                    `/account/${accountViewPaths.SETTINGS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/account/pages/account-settings-page"
+                            ).then((m) => ({
+                                default: m.AccountSettingsPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/account/${accountViewPaths.SETTINGS}`,
@@ -140,21 +138,17 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
                             "Manage your account settings"
                         )
                     }
-                }
-            ),
-            accountSecurity: createRoute(
-                `/account/${accountViewPaths.SECURITY}`,
-                () => {
-                    const AccountSecurityPage = lazy(() =>
-                        import(
-                            "../components/account/pages/account-security-page"
-                        ).then((m) => ({
-                            default: m.AccountSecurityPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AccountSecurityPage,
+                ),
+                accountSecurity: defineRoute(
+                    `/account/${accountViewPaths.SECURITY}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/account/pages/account-security-page"
+                            ).then((m) => ({
+                                default: m.AccountSecurityPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/account/${accountViewPaths.SECURITY}`,
@@ -162,21 +156,17 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
                             "Manage your security settings"
                         )
                     }
-                }
-            ),
-            accountApiKeys: createRoute(
-                `/account/${accountViewPaths.API_KEYS}`,
-                () => {
-                    const AccountApiKeysPage = lazy(() =>
-                        import(
-                            "../components/account/pages/account-api-keys-page"
-                        ).then((m) => ({
-                            default: m.AccountApiKeysPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AccountApiKeysPage,
+                ),
+                accountApiKeys: defineRoute(
+                    `/account/${accountViewPaths.API_KEYS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/account/pages/account-api-keys-page"
+                            ).then((m) => ({
+                                default: m.AccountApiKeysPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/account/${accountViewPaths.API_KEYS}`,
@@ -184,21 +174,17 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
                             "Manage your API keys"
                         )
                     }
-                }
-            ),
-            accountOrganizations: createRoute(
-                `/account/${accountViewPaths.ORGANIZATIONS}`,
-                () => {
-                    const AccountOrganizationsPage = lazy(() =>
-                        import(
-                            "../components/account/pages/account-organizations-page"
-                        ).then((m) => ({
-                            default: m.AccountOrganizationsPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AccountOrganizationsPage,
+                ),
+                accountOrganizations: defineRoute(
+                    `/account/${accountViewPaths.ORGANIZATIONS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/account/pages/account-organizations-page"
+                            ).then((m) => ({
+                                default: m.AccountOrganizationsPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/account/${accountViewPaths.ORGANIZATIONS}`,
@@ -206,21 +192,17 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
                             "Manage your organizations"
                         )
                     }
-                }
-            ),
-            accountTeams: createRoute(
-                `/account/${accountViewPaths.TEAMS}`,
-                () => {
-                    const AccountTeamsPage = lazy(() =>
-                        import(
-                            "../components/account/pages/account-teams-page"
-                        ).then((m) => ({
-                            default: m.AccountTeamsPage
-                        }))
-                    )
-
-                    return {
-                        PageComponent: AccountTeamsPage,
+                ),
+                accountTeams: defineRoute(
+                    `/account/${accountViewPaths.TEAMS}`,
+                    {
+                        page: lazy(() =>
+                            import(
+                                "../components/account/pages/account-teams-page"
+                            ).then((m) => ({
+                                default: m.AccountTeamsPage
+                            }))
+                        ),
                         meta: createAuthMeta(
                             config,
                             `/account/${accountViewPaths.TEAMS}`,
@@ -228,9 +210,8 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
                             "Manage your team memberships"
                         )
                     }
-                }
-            )
-        }),
+                )
+            }),
         sitemap: async () => {
             return []
         }
