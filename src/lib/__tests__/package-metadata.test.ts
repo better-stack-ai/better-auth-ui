@@ -14,6 +14,14 @@ async function readPackageManifest(): Promise<PackageManifest> {
 }
 
 describe("package dependency compatibility", () => {
+    it("exports the client provider factory from the package root", async () => {
+        const entrypoint = await readFile(resolve("src/index.ts"), "utf8")
+
+        expect(entrypoint).toContain(
+            'export * from "./lib/better-auth-provider"'
+        )
+    })
+
     /**
      * @see https://github.com/better-stack-ai/better-stack/issues/163
      */
@@ -45,5 +53,28 @@ describe("package dependency compatibility", () => {
         expect(manifest.dependencies).not.toHaveProperty("@better-auth/api-key")
         expect(manifest.dependencies).not.toHaveProperty("@better-fetch/fetch")
         expect(manifest.dependencies).not.toHaveProperty("better-call")
+    })
+})
+
+describe("RC publishing", () => {
+    it("can safely publish or retry a prerelease without moving latest", async () => {
+        const workflow = await readFile(
+            resolve(".github/workflows/release.yml"),
+            "utf8"
+        )
+
+        expect(workflow).toContain("workflow_dispatch:")
+        expect(workflow).toContain(
+            "ref: $" +
+                "{{ github.event.release.tag_name || inputs.release_tag }}"
+        )
+        expect(workflow).toContain("npm install -g npm@11.17.0")
+        expect(workflow).toContain("npm publish --access public --provenance")
+        expect(workflow).toContain(
+            'npm view "@btst/better-auth-ui@$PKG_VERSION"'
+        )
+        expect(workflow).toContain(
+            'npm view "@btst/better-auth-ui@$NPM_DIST_TAG"'
+        )
     })
 })

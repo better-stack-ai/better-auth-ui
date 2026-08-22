@@ -1,5 +1,6 @@
 // Re-export plugins and types
 
+export * from "./lib/better-auth-provider"
 export type {
     AccountClientConfig,
     AccountPageProps,

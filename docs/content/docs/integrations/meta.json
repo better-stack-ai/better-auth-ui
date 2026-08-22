@@ -2,6 +2,7 @@
     "icon": "LayoutGrid",
     "defaultOpen": true,
     "pages": [
+        "btst-v3",
         "next-js",
         "tanstack-start",
         "react"
