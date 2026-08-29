@@ -33,7 +33,6 @@ export function ProviderCell({
     classNames,
     account,
     localization,
-    other,
     provider,
     refetch
 }: ProviderCellProps) {
@@ -57,19 +56,11 @@ export function ProviderCell({
         const callbackURL = `${baseURL}${basePath}/${viewPaths.CALLBACK}?redirectTo=${encodeURIComponent(window.location.pathname)}`
 
         try {
-            if (other) {
-                await authClient.oauth2.link({
-                    providerId: provider.provider as SocialProvider,
-                    callbackURL,
-                    fetchOptions: { throw: true }
-                })
-            } else {
-                await authClient.linkSocial({
-                    provider: provider.provider as SocialProvider,
-                    callbackURL,
-                    fetchOptions: { throw: true }
-                })
-            }
+            await authClient.linkSocial({
+                provider: provider.provider as SocialProvider,
+                callbackURL,
+                fetchOptions: { throw: true }
+            })
         } catch (error) {
             toast({
                 variant: "error",
@@ -85,12 +76,13 @@ export function ProviderCell({
     }
 
     const handleUnlink = async () => {
+        if (!account?.accountId) return
+
         setIsLoading(true)
 
         try {
             await unlinkAccount({
-                accountId: account?.accountId,
-                providerId: provider.provider
+                accountId: account.accountId
             })
 
             await refetch?.()

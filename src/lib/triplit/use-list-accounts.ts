@@ -26,6 +26,7 @@ export function useListAccounts({
     return {
         data: results,
         isPending: isPending || fetching,
+        isRefetching: false,
         error
     }
 }

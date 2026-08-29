@@ -3,7 +3,6 @@ import { passkeyClient } from "@better-auth/passkey/client"
 import {
     anonymousClient,
     emailOTPClient,
-    genericOAuthClient,
     magicLinkClient,
     multiSessionClient,
     oneTapClient,
@@ -27,7 +26,6 @@ export const authClient = createAuthClient({
         oneTapClient({
             clientId: ""
         }),
-        genericOAuthClient(),
         anonymousClient(),
         usernameClient(),
         magicLinkClient(),

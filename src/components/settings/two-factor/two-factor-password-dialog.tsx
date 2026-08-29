@@ -75,15 +75,18 @@ export function TwoFactorPasswordDialog({
             })
 
             onOpenChange?.(false)
-            setBackupCodes(response.backupCodes)
 
-            if (twoFactor?.includes("totp")) {
-                setTotpURI(response.totpURI)
+            if ("backupCodes" in response) {
+                setBackupCodes(response.backupCodes)
+
+                if (twoFactor?.includes("totp")) {
+                    setTotpURI(response.totpURI)
+                }
+
+                setTimeout(() => {
+                    setShowBackupCodesDialog(true)
+                }, 250)
             }
-
-            setTimeout(() => {
-                setShowBackupCodesDialog(true)
-            }, 250)
         } catch (error) {
             toast({
                 variant: "error",

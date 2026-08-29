@@ -1,7 +1,6 @@
 import {
-    type ClientPlugin,
     defineClientPlugin,
-    type Route
+    type ResolvedClientPluginRuntime
 } from "@btst/stack/plugins/client"
 import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
@@ -9,9 +8,9 @@ import type { AccountViewProps } from "../components/account/account-view"
 import { accountViewPaths } from "../lib/view-paths"
 import type { AuthLocalization } from "../localization/auth-localization"
 import type { AccountOptions } from "../types/account-options"
+import type { AvatarOptions } from "../types/avatar-options"
 import type { DeleteUserOptions } from "../types/delete-user-options"
 import type { TeamOptions } from "../types/team-options"
-import type { AuthPluginOverrides } from "./auth-plugin"
 
 /**
  * Per-page customization props for account views.
@@ -24,27 +23,22 @@ export type AccountPageProps = Omit<
     localization?: Partial<AuthLocalization>
 }
 
-/**
- * Configuration for account client plugin
- */
-export interface AccountClientConfig {
-    siteBaseURL: string
-    siteBasePath: string
-
-    // Optional context to pass to loaders (for SSR)
-    context?: Record<string, unknown>
-}
+export type AccountPluginOptions = Omit<Partial<AccountOptions>, "basePath">
 
 /**
  * Plugin override interface for account plugin
- * Extends AuthPluginOverrides with account-specific options
+ * Contains only account-specific options consumed by the bridge.
  */
-export interface AccountPluginOverrides extends Partial<AuthPluginOverrides> {
+export interface AccountPluginOverrides {
     /**
      * Enable account view & account configuration
      * @default { fields: ["image", "name"] }
      */
-    account?: boolean | Partial<AccountOptions>
+    account?: boolean | AccountPluginOptions
+    /**
+     * Avatar configuration
+     */
+    avatar?: boolean | AvatarOptions
     /**
      * User Account deletion configuration
      * @default undefined
@@ -67,7 +61,7 @@ export interface AccountPluginOverrides extends Partial<AuthPluginOverrides> {
      * Per-page props (className, classNames, localization, etc.)
      * passed directly to each account view component.
      */
-    pageProps?: NonNullable<AuthPluginOverrides["pageProps"]> & {
+    pageProps?: {
         accountSettings?: AccountPageProps
         accountSecurity?: AccountPageProps
         accountApiKeys?: AccountPageProps
@@ -76,24 +70,15 @@ export interface AccountPluginOverrides extends Partial<AuthPluginOverrides> {
     }
 }
 
-// Curried helper: pins TOverrides=AccountPluginOverrides while letting TRoutes be inferred.
-// See auth-plugin.ts for explanation of why this pattern is needed.
-function definePlugin<TRoutes extends Record<string, Route>>(
-    plugin: ClientPlugin<AccountPluginOverrides, TRoutes>
-): ClientPlugin<AccountPluginOverrides, TRoutes> {
-    return defineClientPlugin(plugin)
-}
-
 // Meta generator factory for account pages
 function createAuthMeta(
-    config: AccountClientConfig,
+    config: ResolvedClientPluginRuntime<"account">,
     path: string,
     title: string,
     description: string
 ) {
     return () => {
-        const { siteBaseURL, siteBasePath } = config
-        const fullUrl = `${siteBaseURL}${siteBasePath}${path}`
+        const fullUrl = `${config.site.baseURL}${config.site.basePath}${path}`
 
         return [
             { name: "title", content: title },
@@ -113,11 +98,12 @@ function createAuthMeta(
  * Account client plugin
  * Provides routes, components, and meta for account management flows
  *
- * @param config - Configuration including queryClient and URLs
+ * Shared site runtime is inherited from createClientStack.
  */
-export const accountClientPlugin = (config: AccountClientConfig) =>
-    definePlugin({
-        name: "account",
+function createResolvedAccountPlugin(
+    config: ResolvedClientPluginRuntime<"account">
+) {
+    return {
         routes: () =>
             defineRoutes({
                 // Account views
@@ -215,4 +201,11 @@ export const accountClientPlugin = (config: AccountClientConfig) =>
         sitemap: async () => {
             return []
         }
+    }
+}
+
+export const accountClientPlugin = () =>
+    defineClientPlugin<AccountPluginOverrides>()({
+        id: "account",
+        resolve: createResolvedAccountPlugin
     })

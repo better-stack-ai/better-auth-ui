@@ -49,7 +49,10 @@ export function useSession({
               }
             : null,
         isPending,
-        refetch: refetch || (() => {}),
+        isRefetching: false,
+        refetch: async () => {
+            await refetch?.()
+        },
         error: (error as BetterFetchError) || null
     }
 }

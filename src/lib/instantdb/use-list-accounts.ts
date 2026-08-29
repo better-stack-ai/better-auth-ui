@@ -33,6 +33,7 @@ export function useListAccounts({
     return {
         data: accounts,
         isPending: !accounts && (isPending || authLoading || isLoading),
+        isRefetching: false,
         error: (error as BetterFetchError) || null
     }
 }

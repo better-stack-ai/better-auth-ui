@@ -1,7 +1,6 @@
 import {
-    type ClientPlugin,
     defineClientPlugin,
-    type Route
+    type ResolvedClientPluginRuntime
 } from "@btst/stack/plugins/client"
 import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
@@ -13,7 +12,6 @@ import type { AdditionalFields } from "../types/additional-fields"
 import type { AnyAuthClient } from "../types/any-auth-client"
 import type { AuthHooks } from "../types/auth-hooks"
 import type { AuthMutators } from "../types/auth-mutators"
-import type { AvatarOptions } from "../types/avatar-options"
 import type { CaptchaOptions } from "../types/captcha-options"
 import type { CredentialsOptions } from "../types/credentials-options"
 import type { GenericOAuthOptions } from "../types/generic-oauth-options"
@@ -33,19 +31,8 @@ export type AuthPageProps = Omit<
 }
 
 /**
- * Configuration for auth client plugin
- */
-export interface AuthClientConfig {
-    siteBaseURL: string
-    siteBasePath: string
-
-    // Optional context to pass to loaders (for SSR)
-    context?: Record<string, unknown>
-}
-
-/**
  * Plugin override interface for auth plugin
- * Defines all configurable options that can be overridden via BetterStackProvider
+ * Defines all configurable options that can be overridden via StackProvider
  */
 export interface AuthPluginOverrides {
     /**
@@ -58,15 +45,6 @@ export interface AuthPluginOverrides {
      * Customize the Localization strings
      */
     localization?: AuthLocalization
-    /**
-     * Base path for the auth views
-     * @default "/auth"
-     */
-    basePath?: string
-    /**
-     * Front end base URL for auth API callbacks
-     */
-    baseURL?: string
     /**
      * Default redirect URL after authenticating
      * @default "/"
@@ -160,10 +138,6 @@ export interface AuthPluginOverrides {
      */
     gravatar?: boolean | GravatarOptions
     /**
-     * Avatar configuration
-     */
-    avatar?: boolean | AvatarOptions
-    /**
      * Additional fields for users
      */
     additionalFields?: AdditionalFields
@@ -203,6 +177,10 @@ export interface AuthPluginOverrides {
         context: { path: string; isSSR: boolean }
     ) => void
     /**
+     * Called whenever Better Auth changes the current session.
+     */
+    onSessionChange?: () => void | Promise<void>
+    /**
      * Per-page props (className, classNames, localization, etc.)
      * passed directly to each auth view component.
      */
@@ -222,26 +200,15 @@ export interface AuthPluginOverrides {
     }
 }
 
-// Curried helper: pins TOverrides=AuthPluginOverrides while letting TRoutes be inferred
-// from the routes object. Calling defineClientPlugin<AuthPluginOverrides>({...}) would
-// prevent TypeScript from inferring TRoutes (it falls back to Record<string, Route>),
-// poisoning MergeAllPluginRoutes with a string index signature downstream.
-function definePlugin<TRoutes extends Record<string, Route>>(
-    plugin: ClientPlugin<AuthPluginOverrides, TRoutes>
-): ClientPlugin<AuthPluginOverrides, TRoutes> {
-    return defineClientPlugin(plugin)
-}
-
 // Meta generator factory for auth pages
 function createAuthMeta(
-    config: AuthClientConfig,
+    config: ResolvedClientPluginRuntime<"auth">,
     path: string,
     title: string,
     description: string
 ) {
     return () => {
-        const { siteBaseURL, siteBasePath } = config
-        const fullUrl = `${siteBaseURL}${siteBasePath}${path}`
+        const fullUrl = `${config.site.baseURL}${config.site.basePath}${path}`
 
         return [
             { name: "title", content: title },
@@ -261,11 +228,10 @@ function createAuthMeta(
  * Auth client plugin
  * Provides routes, components, and meta for authentication flows
  *
- * @param config - Configuration including queryClient and URLs
+ * Shared site runtime is inherited from createClientStack.
  */
-export const authClientPlugin = (config: AuthClientConfig) =>
-    definePlugin({
-        name: "auth",
+function createResolvedAuthPlugin(config: ResolvedClientPluginRuntime<"auth">) {
+    return {
         routes: () =>
             defineRoutes({
                 signIn: defineRoute(`/auth/${authViewPaths.SIGN_IN}`, {
@@ -450,20 +416,27 @@ export const authClientPlugin = (config: AuthClientConfig) =>
             // Only include public-facing auth pages in sitemap
             return [
                 {
-                    url: `${config.siteBaseURL}${config.siteBasePath}/auth/${authViewPaths.SIGN_IN}`,
+                    url: `${config.site.baseURL}${config.site.basePath}/auth/${authViewPaths.SIGN_IN}`,
                     lastModified: new Date(),
                     priority: 0.8
                 },
                 {
-                    url: `${config.siteBaseURL}${config.siteBasePath}/auth/${authViewPaths.SIGN_UP}`,
+                    url: `${config.site.baseURL}${config.site.basePath}/auth/${authViewPaths.SIGN_UP}`,
                     lastModified: new Date(),
                     priority: 0.8
                 },
                 {
-                    url: `${config.siteBaseURL}${config.siteBasePath}/auth/${authViewPaths.FORGOT_PASSWORD}`,
+                    url: `${config.site.baseURL}${config.site.basePath}/auth/${authViewPaths.FORGOT_PASSWORD}`,
                     lastModified: new Date(),
                     priority: 0.5
                 }
             ]
         }
+    }
+}
+
+export const authClientPlugin = () =>
+    defineClientPlugin<AuthPluginOverrides>()({
+        id: "auth",
+        resolve: createResolvedAuthPlugin
     })
