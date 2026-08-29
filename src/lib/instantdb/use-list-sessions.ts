@@ -48,6 +48,7 @@ export function useListSessions({
 
     return {
         data: sessions,
-        isPending: !sessions && (isPending || authLoading || isLoading)
+        isPending: !sessions && (isPending || authLoading || isLoading),
+        isRefetching: false
     }
 }

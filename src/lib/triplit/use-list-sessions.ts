@@ -28,6 +28,7 @@ export function useListSessions({
     return {
         data: sessions as Session[] | undefined,
         isPending: isPending || fetching,
+        isRefetching: false,
         error
     }
 }

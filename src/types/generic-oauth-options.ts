@@ -11,6 +11,6 @@ export type GenericOAuthOptions = {
      * Custom generic OAuth sign in function
      */
     signIn?: (
-        params: Parameters<AuthClient["signIn"]["oauth2"]>[0]
+        params: Parameters<AuthClient["signIn"]["social"]>[0]
     ) => Promise<unknown>
 }

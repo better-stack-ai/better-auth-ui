@@ -33,7 +33,7 @@ export function useTanstackOptions({
 
     const hooks = useMemo(
         () => ({
-            ...(createAuthHooks(authClient) as Partial<AuthHooks>),
+            ...(createAuthHooks(authClient) as unknown as Partial<AuthHooks>),
             useIsRestoring
         }),
         [authClient]

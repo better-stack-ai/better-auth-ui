@@ -17,10 +17,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // ─── mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock("@btst/stack/context", () => ({
-    useCan: vi.fn(),
-    useIdentity: vi.fn(),
+    joinBasePath: (basePath: string, path: string) =>
+        `${basePath.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`,
     useNotify: vi.fn(),
     usePluginOverrides: vi.fn(),
+    usePluginSiteNavigation: vi.fn(),
     useStack: vi.fn(),
     useTranslate: vi.fn()
 }))
@@ -57,10 +58,9 @@ vi.mock("../organization-refetcher", () => ({
 // ─── imports after mocks ──────────────────────────────────────────────────────
 
 import {
-    useCan,
-    useIdentity,
     useNotify,
     usePluginOverrides,
+    usePluginSiteNavigation,
     useStack,
     useTranslate
 } from "@btst/stack/context"
@@ -144,16 +144,35 @@ function renderBridge(
 
 beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(usePluginSiteNavigation).mockImplementation((_pluginId) => ({
+        Link: "a",
+        navigate: vi.fn(),
+        resolve: (...segments: string[]) => {
+            const path = ["/pages", ...segments].join("/")
+            return { path, href: path, crossOrigin: false }
+        }
+    }))
     vi.mocked(useStack).mockReturnValue({
-        basePath: "/p",
+        basePath: "/pages",
         overrides: {},
-        router: {}
-    })
-    vi.mocked(useCan).mockReturnValue({ can: true, isPending: false })
-    vi.mocked(useIdentity).mockReturnValue({
-        identity: null,
-        isPending: false,
-        refetch: vi.fn()
+        router: {},
+        plugins: {
+            auth: {
+                id: "auth",
+                api: { baseURL: "https://example.com", basePath: "/api/data" },
+                site: { baseURL: "https://example.com", basePath: "/pages" }
+            },
+            account: {
+                id: "account",
+                api: { baseURL: "https://example.com", basePath: "/api/data" },
+                site: { baseURL: "https://example.com", basePath: "/pages" }
+            },
+            organization: {
+                id: "organization",
+                api: { baseURL: "https://example.com", basePath: "/api/data" },
+                site: { baseURL: "https://example.com", basePath: "/pages" }
+            }
+        }
     })
     vi.mocked(useNotify).mockReturnValue({
         error: vi.fn(),
@@ -171,23 +190,18 @@ beforeEach(() => {
 // ── 1. Field routing ──────────────────────────────────────────────────────────
 
 describe("field routing — auth-specific fields come from authOverrides only", () => {
-    it("uses authOverrides.basePath, not accountOverrides.basePath", () => {
+    it("derives the auth base path from the resolved plugin site", () => {
         const ctx = renderBridge(
-            { basePath: "/auth" },
-            { basePath: "/account" },
-            { basePath: "/org" }
+            { basePath: "/wrong-auth" },
+            { basePath: "/wrong-account" },
+            { basePath: "/wrong-organization" }
         )
-        expect(ctx.basePath).toBe("/auth")
+        expect(ctx.basePath).toBe("/pages/auth")
     })
 
-    it("strips trailing slash from basePath", () => {
-        const ctx = renderBridge({ basePath: "/auth/" })
-        expect(ctx.basePath).toBe("/auth")
-    })
-
-    it("defaults basePath to /auth when not set", () => {
-        const ctx = renderBridge()
-        expect(ctx.basePath).toBe("/auth")
+    it("uses the resolved site origin for Better Auth callbacks", () => {
+        const ctx = renderBridge({ baseURL: "https://wrong.example.com" })
+        expect(ctx.baseURL).toBe("https://example.com")
     })
 
     it("uses authOverrides.redirectTo, not accountOverrides.redirectTo", () => {
@@ -199,10 +213,10 @@ describe("field routing — auth-specific fields come from authOverrides only", 
     })
 
     it("uses authOverrides.localization, not accountOverrides.localization", () => {
-        const customLocalization = { SIGN_IN: "Log in" } as any
+        const customLocalization = { SIGN_IN: "Log in" }
         const ctx = renderBridge(
             { localization: customLocalization },
-            { localization: { SIGN_IN: "Account sign in" } as any }
+            { localization: { SIGN_IN: "Account sign in" } }
         )
         // Our localization is merged with defaults, so SIGN_IN should be our override
         expect(ctx.localization.SIGN_IN).toBe("Log in")
@@ -210,7 +224,7 @@ describe("field routing — auth-specific fields come from authOverrides only", 
 
     it("uses authOverrides feature flags — not org overrides", () => {
         const ctx = renderBridge(
-            { magicLink: true, passkey: true, twoFactor: ["totp"] as any },
+            { magicLink: true, passkey: true, twoFactor: ["totp"] },
             {},
             { magicLink: false, passkey: false } // org tries to override — must be ignored
         )
@@ -233,8 +247,8 @@ describe("field routing — auth-specific fields come from authOverrides only", 
         const captcha = {
             provider: "cloudflare-turnstile",
             siteKey: "key"
-        } as any
-        const ctx = renderBridge({ captcha }, { captcha: null as any })
+        }
+        const ctx = renderBridge({ captcha }, { captcha: null })
         expect(ctx.captcha).toEqual(captcha)
     })
 })
@@ -308,19 +322,19 @@ describe("avatar normalization", () => {
     })
 
     it("avatar: true → { extension: 'png', size: 128 }", () => {
-        const ctx = renderBridge({ avatar: true })
+        const ctx = renderBridge({}, { avatar: true })
         expect(ctx.avatar).toMatchObject({ extension: "png", size: 128 })
     })
 
     it("avatar with upload → size defaults to 256", () => {
         const upload = vi.fn()
-        const ctx = renderBridge({ avatar: { upload } })
+        const ctx = renderBridge({}, { avatar: { upload } })
         expect(ctx.avatar?.size).toBe(256)
         expect(ctx.avatar?.upload).toBe(upload)
     })
 
     it("avatar without upload → size defaults to 128", () => {
-        const ctx = renderBridge({ avatar: {} })
+        const ctx = renderBridge({}, { avatar: {} })
         expect(ctx.avatar?.size).toBe(128)
     })
 })
@@ -357,12 +371,12 @@ describe("account memo (from accountOverrides)", () => {
         expect(ctx.account).toBeUndefined()
     })
 
-    it("account: true uses accountOverrides.basePath", () => {
-        const ctx = renderBridge({}, { basePath: "/p/account", account: true })
-        expect(ctx.account?.basePath).toBe("/p/account")
+    it("account: true derives its base path from the resolved site", () => {
+        const ctx = renderBridge({}, { account: true })
+        expect(ctx.account?.basePath).toBe("/pages/account")
     })
 
-    it("account object: accountProp.basePath takes priority over root basePath", () => {
+    it("ignores obsolete root and nested account base paths", () => {
         const ctx = renderBridge(
             {},
             {
@@ -370,11 +384,11 @@ describe("account memo (from accountOverrides)", () => {
                 account: { basePath: "/specific-account" }
             }
         )
-        expect(ctx.account?.basePath).toBe("/specific-account")
+        expect(ctx.account?.basePath).toBe("/pages/account")
     })
 
     it("account: true defaults fields to ['image', 'name']", () => {
-        const ctx = renderBridge({}, { account: true, basePath: "/account" })
+        const ctx = renderBridge({}, { account: true })
         expect(ctx.account?.fields).toEqual(["image", "name"])
     })
 
@@ -400,16 +414,12 @@ describe("organization memo (from organizationOverrides)", () => {
         expect(ctx.organization).toBeUndefined()
     })
 
-    it("organization: true uses organizationOverrides.basePath", () => {
-        const ctx = renderBridge(
-            {},
-            {},
-            { basePath: "/p/org", organization: true }
-        )
-        expect(ctx.organization?.basePath).toBe("/p/org")
+    it("organization: true derives its base path from the resolved site", () => {
+        const ctx = renderBridge({}, {}, { organization: true })
+        expect(ctx.organization?.basePath).toBe("/pages/organization")
     })
 
-    it("organization.basePath takes priority over root basePath", () => {
+    it("ignores obsolete root and nested organization base paths", () => {
         const ctx = renderBridge(
             {},
             {},
@@ -418,7 +428,7 @@ describe("organization memo (from organizationOverrides)", () => {
                 organization: { basePath: "/specific-org", customRoles: [] }
             }
         )
-        expect(ctx.organization?.basePath).toBe("/specific-org")
+        expect(ctx.organization?.basePath).toBe("/pages/organization")
     })
 
     it("logo: true defaults to { extension: 'png', size: 128 }", () => {
@@ -595,40 +605,31 @@ describe("hooks — useListTeamMembers uses POST (not GET)", () => {
     })
 })
 
-describe("BTST v3 top-level providers", () => {
-    it("routes organization permission hooks through stack can", () => {
-        vi.mocked(useStack).mockReturnValue({
-            auth: { can: vi.fn(), getIdentity: vi.fn() },
-            basePath: "/p",
-            overrides: {},
-            router: {}
-        })
-
-        const context = renderBridge()
-        const permission = context.hooks.useHasPermission({
-            organizationId: "org-1",
-            permissions: { member: ["update"] }
-        })
-
-        expect(permission.data?.success).toBe(true)
-        expect(useCan).toHaveBeenCalledWith({
-            resource: "member",
-            action: "update",
-            params: { organizationId: "org-1" }
-        })
-    })
-
-    it("preserves Better Auth permissions without an explicit stack can mapping", () => {
+describe("BTST v3 UI-service bridge", () => {
+    it("always preserves Better Auth native permission hooks", () => {
         const useHasPermission = vi.fn(() => ({
             data: { error: null, success: false },
             isPending: false,
             isRefetching: false
         }))
         vi.mocked(useStack).mockReturnValue({
-            auth: { getIdentity: vi.fn() },
-            basePath: "/p",
+            auth: {} as never,
+            basePath: "/pages",
             overrides: {},
-            router: {}
+            router: {},
+            plugins: {
+                auth: {
+                    id: "auth",
+                    api: {
+                        baseURL: "https://example.com",
+                        basePath: "/api/data"
+                    },
+                    site: {
+                        baseURL: "https://example.com",
+                        basePath: "/pages"
+                    }
+                }
+            }
         })
 
         const context = renderBridge({ hooks: { useHasPermission } })
@@ -639,55 +640,110 @@ describe("BTST v3 top-level providers", () => {
 
         expect(permission.data?.success).toBe(false)
         expect(useHasPermission).toHaveBeenCalledOnce()
-        expect(useCan).not.toHaveBeenCalled()
     })
 
-    it("fails closed for permission batches that stack cannot represent", () => {
+    it("uses the default Better Auth permission endpoint when not overridden", () => {
+        const context = renderBridge()
+        context.hooks.useHasPermission({
+            organizationId: "org-1",
+            permissions: { member: ["update"] }
+        })
+
+        capturedQueryFns[
+            'hasPermission:{"organizationId":"org-1","permissions":{"member":["update"]}}'
+        ]?.()
+        expect(mockFetch).toHaveBeenCalledWith(
+            "/organization/has-permission",
+            expect.objectContaining({
+                method: "POST",
+                body: {
+                    organizationId: "org-1",
+                    permissions: { member: ["update"] }
+                }
+            })
+        )
+    })
+
+    it("uses the top-level router for same-origin navigation", () => {
+        const navigate = vi.fn()
+        const StackLink = vi.fn((_props: React.ComponentProps<"a">) => null)
         vi.mocked(useStack).mockReturnValue({
-            auth: { can: vi.fn(), getIdentity: vi.fn() },
-            basePath: "/p",
+            basePath: "/pages",
             overrides: {},
-            router: {}
+            router: { Link: StackLink, navigate },
+            plugins: {
+                auth: {
+                    id: "auth",
+                    api: {
+                        baseURL: "https://example.com",
+                        basePath: "/api/data"
+                    },
+                    site: {
+                        baseURL: "https://example.com",
+                        basePath: "/pages"
+                    }
+                }
+            }
         })
 
         const context = renderBridge()
-        const permission = context.hooks.useHasPermission({
-            organizationId: "org-1",
-            permissions: { member: ["update", "delete"] }
-        })
-
-        expect(permission.data?.success).toBe(false)
-        expect(permission.isPending).toBe(false)
-    })
-
-    it("sources navigation and refreshes identity from top-level providers", async () => {
-        const navigate = vi.fn()
-        const refresh = vi.fn()
-        const refetch = vi.fn()
-        const StackLink = () => null
-        vi.mocked(useIdentity).mockReturnValue({
-            identity: null,
-            isPending: false,
-            refetch
-        })
-        vi.mocked(useStack).mockReturnValue({
-            basePath: "/p",
-            overrides: {},
-            router: { Link: StackLink, navigate, refresh }
-        })
-
-        const context = renderBridge({
-            Link: () => null,
-            navigate: vi.fn(),
-            onSessionChange: vi.fn()
-        })
 
         context.navigate("/account")
-        await context.onSessionChange?.()
-        expect(context.Link).toBe(StackLink)
         expect(navigate).toHaveBeenCalledWith("/account")
-        expect(refetch).toHaveBeenCalledOnce()
-        expect(refresh).toHaveBeenCalledOnce()
+
+        render(<context.Link href="/account">Account</context.Link>)
+        expect(StackLink.mock.calls[0]?.[0]).toEqual(
+            expect.objectContaining({ href: "/account" })
+        )
+    })
+
+    it("uses absolute plugin site locations for cross-origin links", () => {
+        vi.mocked(usePluginSiteNavigation).mockImplementation((pluginId) => ({
+            Link: "a",
+            navigate: vi.fn(),
+            resolve: (...segments: string[]) => {
+                const path = ["/pages", ...segments].join("/")
+                const crossOrigin = pluginId === "account"
+                return {
+                    path,
+                    href: crossOrigin
+                        ? `https://accounts.example.com${path}`
+                        : path,
+                    crossOrigin
+                }
+            }
+        }))
+
+        const context = renderBridge({}, { account: true })
+
+        expect(context.account?.basePath).toBe(
+            "https://accounts.example.com/pages/account"
+        )
+
+        const { getByRole } = render(
+            <context.Link href={`${context.account?.basePath}/settings`}>
+                Account settings
+            </context.Link>
+        )
+        expect(getByRole("link")).toHaveAttribute(
+            "href",
+            "https://accounts.example.com/pages/account/settings"
+        )
+    })
+
+    it("passes through the explicit session-change callback exactly once", async () => {
+        const onSessionChange = vi.fn()
+        const context = renderBridge({ onSessionChange })
+
+        await context.onSessionChange?.()
+
+        expect(onSessionChange).toHaveBeenCalledOnce()
+    })
+
+    it("has no hidden session synchronization without a callback", () => {
+        const context = renderBridge()
+
+        expect(context.onSessionChange).toBeUndefined()
     })
 
     it("routes toast rendering through the top-level notify provider", () => {

@@ -1,7 +1,6 @@
 import {
-    type ClientPlugin,
     defineClientPlugin,
-    type Route
+    type ResolvedClientPluginRuntime
 } from "@btst/stack/plugins/client"
 import { defineRoute, defineRoutes } from "@btst/yar"
 import { lazy } from "react"
@@ -10,7 +9,6 @@ import { organizationViewPaths } from "../lib/view-paths"
 import type { AuthLocalization } from "../localization/auth-localization"
 import type { OrganizationOptions } from "../types/organization-options"
 import type { TeamOptions } from "../types/team-options"
-import type { AuthPluginOverrides } from "./auth-plugin"
 
 /**
  * Per-page customization props for organization views.
@@ -23,28 +21,18 @@ export type OrganizationPageProps = Omit<
     localization?: Partial<AuthLocalization>
 }
 
-/**
- * Configuration for organization client plugin
- */
-export interface OrganizationClientConfig {
-    siteBaseURL: string
-    siteBasePath: string
-
-    // Optional context to pass to loaders (for SSR)
-    context?: Record<string, unknown>
-}
+export type OrganizationPluginOptions = Omit<OrganizationOptions, "basePath">
 
 /**
  * Plugin override interface for organization plugin
- * Extends AuthPluginOverrides with organization-specific options
+ * Contains only organization-specific options consumed by the bridge.
  */
-export interface OrganizationPluginOverrides
-    extends Partial<AuthPluginOverrides> {
+export interface OrganizationPluginOverrides {
     /**
      * Organization plugin configuration
      * @default undefined
      */
-    organization?: OrganizationOptions | boolean
+    organization?: OrganizationPluginOptions | boolean
     /**
      * Enable teams feature within organizations
      * @default undefined
@@ -62,7 +50,7 @@ export interface OrganizationPluginOverrides
      * Per-page props (className, classNames, localization, etc.)
      * passed directly to each organization view component.
      */
-    pageProps?: NonNullable<AuthPluginOverrides["pageProps"]> & {
+    pageProps?: {
         organizationSettings?: OrganizationPageProps
         organizationMembers?: OrganizationPageProps
         organizationApiKeys?: OrganizationPageProps
@@ -70,24 +58,15 @@ export interface OrganizationPluginOverrides
     }
 }
 
-// Curried helper: pins TOverrides=OrganizationPluginOverrides while letting TRoutes be inferred.
-// See auth-plugin.ts for explanation of why this pattern is needed.
-function definePlugin<TRoutes extends Record<string, Route>>(
-    plugin: ClientPlugin<OrganizationPluginOverrides, TRoutes>
-): ClientPlugin<OrganizationPluginOverrides, TRoutes> {
-    return defineClientPlugin(plugin)
-}
-
 // Meta generator factory for organization pages
 function createAuthMeta(
-    config: OrganizationClientConfig,
+    config: ResolvedClientPluginRuntime<"organization">,
     path: string,
     title: string,
     description: string
 ) {
     return () => {
-        const { siteBaseURL, siteBasePath } = config
-        const fullUrl = `${siteBaseURL}${siteBasePath}${path}`
+        const fullUrl = `${config.site.baseURL}${config.site.basePath}${path}`
 
         return [
             { name: "title", content: title },
@@ -107,11 +86,12 @@ function createAuthMeta(
  * Organization client plugin
  * Provides routes, components, and meta for organization management flows
  *
- * @param config - Configuration including queryClient and URLs
+ * Shared site runtime is inherited from createClientStack.
  */
-export const organizationClientPlugin = (config: OrganizationClientConfig) =>
-    definePlugin({
-        name: "organization",
+function createResolvedOrganizationPlugin(
+    config: ResolvedClientPluginRuntime<"organization">
+) {
+    return {
         routes: () =>
             defineRoutes({
                 organizationSettings: defineRoute(
@@ -190,4 +170,11 @@ export const organizationClientPlugin = (config: OrganizationClientConfig) =>
         sitemap: async () => {
             return []
         }
+    }
+}
+
+export const organizationClientPlugin = () =>
+    defineClientPlugin<OrganizationPluginOverrides>()({
+        id: "organization",
+        resolve: createResolvedOrganizationPlugin
     })

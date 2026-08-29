@@ -37,6 +37,9 @@ export function useSession({
             : null,
         error,
         isPending: isPending,
-        refetch: refetch || (() => {})
+        isRefetching: false,
+        refetch: async () => {
+            await refetch?.()
+        }
     }
 }

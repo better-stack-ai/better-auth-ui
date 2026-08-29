@@ -1,190 +1,238 @@
 ---
 title: BTST v3
-description: Configure Better Auth UI as the client and server auth provider for BTST v3
+description: Use Better Auth UI routes and services with BTST v3
 ---
 
-`@btst/better-auth-ui` supplies the Better Auth client plugins, page routes, and
-the first-party auth-provider adapters used by BTST v3. Router, API,
-notification, localization, and auth services are configured once at the top
-level instead of repeated in each plugin override.
+`@btst/better-auth-ui` registers Better Auth UI routes with BTST and adapts
+BTST's router, notifications, and localization services to the Better Auth UI
+context. Better Auth UI continues to read its own session and permissions from
+your Better Auth client.
+
+BTST authorization is separate and optional. This package does not convert a
+Better Auth user into a BTST identity or export client/server authorization
+adapters.
 
 ## Install the release candidate
 
+The minimal integration uses the auth and account plugins:
+
 ```bash
-pnpm add @btst/stack@next @btst/better-auth-ui@next @btst/yar@^1.3.0
+pnpm add @btst/stack@next @btst/better-auth-ui@next @btst/yar@^1.3.2
 ```
+
+Enable organization, API-key, passkey, multi-session, and similar UI only when
+the matching Better Auth plugins are configured in your application.
 
 ## Register the client plugins
 
+Configure the API, site mount, and query client once. The Better Auth UI plugin
+definitions inherit that resolved runtime and remain safe to import while
+creating an SSR stack.
+
 ```tsx title="lib/stack-client.tsx"
-import { createStackClient } from "@btst/stack/client"
+import { createClientStack } from "@btst/stack/client"
 import {
   accountClientPlugin,
   authClientPlugin,
   organizationClientPlugin,
 } from "@btst/better-auth-ui/client"
+import type { QueryClient } from "@tanstack/react-query"
 
-export function getStackClient() {
-  return createStackClient({
-    basePath: "/p",
+export function createAppClientStack(queryClient: QueryClient, baseURL: string) {
+  return createClientStack({
+    api: {
+      baseURL,
+      basePath: "/api/data",
+    },
+    site: {
+      baseURL,
+      basePath: "/pages",
+    },
+    queryClient,
     plugins: {
-      auth: authClientPlugin({
-        siteBasePath: "/p",
-        siteBaseURL: process.env.NEXT_PUBLIC_APP_URL!,
-      }),
-      account: accountClientPlugin({
-        siteBasePath: "/p",
-        siteBaseURL: process.env.NEXT_PUBLIC_APP_URL!,
-      }),
-      organization: organizationClientPlugin({
-        siteBasePath: "/p",
-        siteBaseURL: process.env.NEXT_PUBLIC_APP_URL!,
-      }),
+      auth: authClientPlugin(),
+      account: accountClientPlugin(),
+      // Opt in only when Better Auth organization support is configured.
+      // organization: organizationClientPlugin(),
     },
   })
 }
 ```
 
+For SSR, create a request-specific stack with filtered `api.headers`. Create a
+separate stable browser stack without request headers and pass that stack to
+`StackProvider`. Never serialize a server-created stack, Better Auth server
+instance, request headers, or secrets into the browser.
+
 ## Configure the client provider
 
-`createBetterAuthProvider` maps the Better Auth session to BTST identity. It
-leaves Better Auth UI's native permission hook in place unless an explicit
-authorization mapping is configured. Set `permissionProvider` only when the
-matching Better Auth client plugin is installed; resource/action checks are
-then sent to that plugin's `hasPermission` endpoint and anonymous checks fail
-closed.
+The resolved stack infers the available override keys and their value types.
+Do not declare a manual plugin override map or repeat API/site paths on the
+provider.
 
-```tsx title="app/p/layout.tsx"
+```tsx title="app/pages/client-layout.tsx"
 "use client"
 
-import { StackProvider, type StackI18nProvider, type StackNotifyProvider } from "@btst/stack/context"
+import { StackProvider } from "@btst/stack/context"
 import { nextRouter } from "@btst/stack/next"
-import { createBetterAuthProvider } from "@btst/better-auth-ui"
-import {
-  type AccountPluginOverrides,
-  type AuthPluginOverrides,
-  type OrganizationPluginOverrides,
-} from "@btst/better-auth-ui/client"
-import { toast } from "sonner"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
-import { translateForApp } from "@/lib/i18n"
+import { createAppClientStack } from "@/lib/stack-client"
 
-type PluginOverrides = {
-  auth: AuthPluginOverrides
-  account: AccountPluginOverrides
-  organization: OrganizationPluginOverrides
-}
-
-const stackAuth = createBetterAuthProvider(authClient, {
-  loginPath: "/p/auth/sign-in",
-  permissionProvider: "organization",
-})
-
-const notify: StackNotifyProvider = {
-  success: toast.success,
-  error: toast.error,
-  info: toast.info,
-  warning: toast.warning,
-}
-
-const i18n: StackI18nProvider = {
-  translate: (key, defaultValue, params) =>
-    translateForApp(key, { defaultValue, ...params }),
-}
-
-export default function PagesLayout({ children }: { children: React.ReactNode }) {
-  const baseURL =
-    typeof window === "undefined"
-      ? process.env.NEXT_PUBLIC_APP_URL!
-      : window.location.origin
+export default function PagesClientLayout({
+  baseURL,
+  children,
+}: {
+  baseURL: string
+  children: React.ReactNode
+}) {
+  const router = useRouter()
+  const [queryClient] = useState(() => new QueryClient())
+  const stack = useMemo(
+    () => createAppClientStack(queryClient, baseURL),
+    [baseURL, queryClient],
+  )
 
   return (
-    <StackProvider<PluginOverrides>
-      basePath="/p"
-      router={nextRouter()}
-      api={{ baseURL, basePath: "/api/data" }}
-      auth={stackAuth}
-      notify={notify}
-      i18n={i18n}
-      overrides={{
-        auth: {
-          authClient,
-          basePath: "/p/auth",
-          redirectTo: "/p/account/settings",
-        },
-        account: {
-          authClient,
-          basePath: "/p/account",
-          account: true,
-        },
-        organization: {
-          authClient,
-          basePath: "/p/organization",
-          organization: true,
-        },
-      }}
-    >
-      {children}
-    </StackProvider>
+    <QueryClientProvider client={queryClient}>
+      <StackProvider
+        stack={stack}
+        router={nextRouter()}
+        overrides={{
+          auth: {
+            authClient,
+            redirectTo: "/pages/account/settings",
+            onSessionChange: () => router.refresh(),
+          },
+          account: {
+            account: true,
+            avatar: {
+              upload: uploadAvatar,
+              delete: deleteAvatar,
+              size: 128,
+              extension: "png",
+            },
+          },
+        }}
+      >
+        {children}
+      </StackProvider>
+    </QueryClientProvider>
   )
 }
 ```
 
-Better Auth UI localization keys are passed to the top-level translator as
-`better-auth-ui.KEY`, with the package's English string as `defaultValue`.
-Toasts use the top-level notification provider, and navigation/session refresh
-use the top-level router.
+`authClient` is configured once under `auth`. Avatar configuration belongs
+under `account`. Route bases cannot be overridden: with the site mounted at
+`/pages`, the effective routes are `/pages/auth`, `/pages/account`, and, when
+registered, `/pages/organization`.
 
-## Configure the server provider
+Better Auth UI localization keys reach BTST i18n as
+`better-auth-ui.KEY`, retaining the package's English string as the default.
+Toasts use the top-level notification service. Links and programmatic
+navigation resolve each plugin's site endpoint; same-origin destinations use
+the top-level router and cross-origin destinations use full-page navigation.
 
-The server entry exports the corresponding adapter for `stack({ auth })`. It
-passes the incoming headers to Better Auth and memoizes the session result for
-the request. BTST also shares that identity with all lifecycle hooks handling
-the request.
+## Choose session synchronization explicitly
 
-```ts title="lib/stack.ts"
-import { stack } from "@btst/stack/api"
-import { createBetterAuthProvider } from "@btst/better-auth-ui/server"
+`onSessionChange` runs after Better Auth UI changes the session. The bridge
+calls only your callback; it does not refetch a BTST identity or refresh a
+framework route behind the scenes.
+
+- Next.js: call `router.refresh()` to hydrate a new server-rendered
+  `initialIdentity`.
+- React Router: call `useRevalidator().revalidate()`.
+- TanStack Router: call `router.invalidate()`.
+- Client-only apps: call your application auth store's identity refetch
+  function when that is the desired behavior.
+
+The application may refresh the route, refetch its BTST identity, do both, or
+do neither.
+
+## Optional application-owned BTST authorization
+
+Better Auth UI does not require BTST authorization. If other BTST business
+plugins should use the same signed-in user, define the mapping in application
+code so your identity schema remains explicit and type-safe.
+
+```ts title="lib/authorization.client.ts"
+"use client"
+
+import { createClientAuth } from "@btst/stack/authorization/client"
+import { authorization } from "@/lib/authorization"
+import { authClient } from "@/lib/auth-client"
+
+export const clientAuth = createClientAuth({
+  authorization,
+  getIdentity: async () => {
+    const { data } = await authClient.getSession()
+    const user = data?.user
+
+    return user
+      ? {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          tenantId: user.tenantId,
+        }
+      : null
+  },
+  loginPath: "/pages/auth/sign-in",
+})
+```
+
+```ts title="lib/authorization.server.ts"
+import "server-only"
+
+import { createServerAuth } from "@btst/stack/authorization/server"
+import { authorization } from "@/lib/authorization"
 import { auth } from "@/lib/auth"
-import { adapter } from "@/lib/btst-adapter"
 
-export const { handler } = stack({
-  basePath: "/api/data",
-  adapter,
-  plugins: {},
-  auth: createBetterAuthProvider(auth, {
-    permissionProvider: "organization",
-  }),
+export const serverAuth = createServerAuth({
+  authorization,
+  getIdentityFromHeaders: async ({ headers }) => {
+    const session = await auth.api.getSession({ headers })
+    const user = session?.user
+
+    return user
+      ? {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          tenantId: user.tenantId,
+        }
+      : null
+  },
 })
 ```
 
-If the Better Auth organization plugin is not configured, omit
-`permissionProvider`. To use the admin plugin instead, set it to `"admin"` on
-both the client and server adapters.
+The `role` and `tenantId` fields above are illustrative application fields, not
+fields inferred by Better Auth UI. Pass `clientAuth` and an optional
+server-rendered `initialIdentity` to `StackProvider`; pass `serverAuth` to
+`createBackendStack`.
 
-## Add the v3 entry factories
+Managed or custom backends can implement the same BTST authorization contracts
+without Better Auth. Keep backend authorization authoritative and never trust
+browser-provided identity or permission facts.
 
-```ts title="app/api/data/[[...all]]/route.ts"
-import { toNextRouteHandlers } from "@btst/stack/next"
-import { handler } from "@/lib/stack"
+## Optional data adapters
 
-export const { GET, POST, PUT, PATCH, DELETE } = toNextRouteHandlers(handler)
-```
+The base entries do not load optional data adapters. Install their peers only
+when importing the matching subpath:
 
-```tsx title="app/p/[[...all]]/page.tsx"
-import { createNextPage } from "@btst/stack/next"
-import { getOrCreateQueryClient } from "@/lib/query-client"
-import { getStackClient } from "@/lib/stack-client"
+```bash
+# @btst/better-auth-ui/tanstack
+pnpm add @daveyplate/better-auth-tanstack @tanstack/react-query
 
-export const dynamic = "force-dynamic"
+# @btst/better-auth-ui/instantdb
+pnpm add @instantdb/react
 
-const page = createNextPage({
-  getStackClient,
-  getQueryClient: getOrCreateQueryClient,
-})
-
-export default page.Page
-export const generateMetadata = page.generateMetadata
+# @btst/better-auth-ui/triplit
+pnpm add @triplit/client @triplit/react
 ```
 
 Finally, import `@btst/better-auth-ui/css` from the application's global

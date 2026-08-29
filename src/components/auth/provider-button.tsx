@@ -74,29 +74,23 @@ export function ProviderButton({
         setIsSubmitting(true)
 
         try {
-            if (other) {
-                const oauth2Params = {
-                    providerId: provider.provider,
-                    callbackURL: getCallbackURL(),
-                    fetchOptions: { throw: true }
-                }
+            const socialParams = {
+                provider: provider.provider as SocialProvider,
+                callbackURL: getCallbackURL(),
+                fetchOptions: { throw: true }
+            }
 
+            if (other) {
                 if (genericOAuth?.signIn) {
-                    await genericOAuth.signIn(oauth2Params)
+                    await genericOAuth.signIn(socialParams)
 
                     setTimeout(() => {
                         setIsSubmitting(false)
                     }, 10000)
                 } else {
-                    await authClient.signIn.oauth2(oauth2Params)
+                    await authClient.signIn.social(socialParams)
                 }
             } else {
-                const socialParams = {
-                    provider: provider.provider as SocialProvider,
-                    callbackURL: getCallbackURL(),
-                    fetchOptions: { throw: true }
-                }
-
                 if (social?.signIn) {
                     await social.signIn(socialParams)
 

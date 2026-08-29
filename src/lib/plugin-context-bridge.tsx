@@ -1,20 +1,16 @@
 "use client"
 
 import {
-    useCan,
-    useIdentity,
     useNotify,
     usePluginOverrides,
+    usePluginSiteNavigation,
     useStack,
     useTranslate
 } from "@btst/stack/context"
 import { type ReactNode, useMemo } from "react"
 import { RecaptchaV3 } from "../components/captcha/recaptcha-v3"
 import { useAuthData } from "../hooks/use-auth-data"
-import {
-    type AuthLocalization,
-    authLocalization
-} from "../localization/auth-localization"
+import { authLocalization } from "../localization/auth-localization"
 import type { AccountPluginOverrides } from "../plugins/account-plugin"
 import type { AuthPluginOverrides } from "../plugins/auth-plugin"
 import type { OrganizationPluginOverrides } from "../plugins/organization-plugin"
@@ -54,35 +50,6 @@ const defaultReplace = (href: string) => {
     window.location.replace(href)
 }
 
-function useStackHasPermission(
-    params: Parameters<AuthHooks["useHasPermission"]>[0]
-): ReturnType<AuthHooks["useHasPermission"]> {
-    const permissions = (
-        "permissions" in params ? params.permissions : params.permission
-    ) as Record<string, string[]>
-    const permissionEntries = Object.entries(permissions)
-    const [resource, actions] = permissionEntries[0] ?? []
-    const action = actions?.[0]
-    const isSinglePermission =
-        permissionEntries.length === 1 && actions?.length === 1
-    const organizationId =
-        "organizationId" in params ? params.organizationId : undefined
-    const { can, isPending } = useCan({
-        resource: resource ?? "",
-        action: action ?? "",
-        params: organizationId ? { organizationId } : undefined
-    })
-
-    return {
-        data: {
-            error: null,
-            success: Boolean(isSinglePermission && resource && action && can)
-        },
-        isPending: isSinglePermission && isPending,
-        isRefetching: isSinglePermission && isPending
-    }
-}
-
 /**
  * Bridge component that converts btst plugin overrides to AuthUIContext
  * This allows existing components to continue using AuthUIContext
@@ -93,10 +60,12 @@ export function BetterAuthPluginProvider({
 }: {
     children: ReactNode
 }) {
-    const { auth, router } = useStack()
-    const { refetch: refetchIdentity } = useIdentity()
+    const { plugins, router } = useStack()
     const notify = useNotify()
     const translate = useTranslate()
+    const authNavigation = usePluginSiteNavigation("auth")
+    const accountNavigation = usePluginSiteNavigation("account")
+    const organizationNavigation = usePluginSiteNavigation("organization")
 
     // Read auth plugin overrides
     const authOverrides = usePluginOverrides<
@@ -104,7 +73,6 @@ export function BetterAuthPluginProvider({
         Partial<AuthPluginOverrides>
     >("auth", {
         localization: authLocalization,
-        basePath: "/auth",
         redirectTo: "/",
         freshAge: 60 * 60 * 24,
         changeEmail: true,
@@ -124,11 +92,18 @@ export function BetterAuthPluginProvider({
     >("organization", {})
 
     const authClient = authOverrides.authClient as AuthClient
+    const authSite = plugins?.auth?.site
+    const authLocation = authNavigation.resolve("auth")
+    const accountLocation = accountNavigation.resolve("account")
+    const organizationLocation = organizationNavigation.resolve("organization")
+    const authBasePath = authLocation.href
+    const accountBasePath = accountLocation.href
+    const organizationBasePath = organizationLocation.href
 
     const avatar = useMemo<AvatarOptions | undefined>(() => {
-        if (!authOverrides.avatar) return
+        if (!accountOverrides.avatar) return
 
-        if (authOverrides.avatar === true) {
+        if (accountOverrides.avatar === true) {
             return {
                 extension: "png",
                 size: 128
@@ -136,50 +111,34 @@ export function BetterAuthPluginProvider({
         }
 
         return {
-            upload: authOverrides.avatar.upload,
-            delete: authOverrides.avatar.delete,
-            extension: authOverrides.avatar.extension || "png",
+            upload: accountOverrides.avatar.upload,
+            delete: accountOverrides.avatar.delete,
+            extension: accountOverrides.avatar.extension || "png",
             size:
-                authOverrides.avatar.size ||
-                (authOverrides.avatar.upload ? 256 : 128),
-            Image: authOverrides.avatar.Image
+                accountOverrides.avatar.size ||
+                (accountOverrides.avatar.upload ? 256 : 128),
+            Image: accountOverrides.avatar.Image
         }
-    }, [authOverrides.avatar])
+    }, [accountOverrides.avatar])
 
     const account = useMemo<AccountOptionsContext | undefined>(() => {
         const accountProp = accountOverrides?.account
         if (!accountProp) return undefined
 
         if (accountProp === true) {
-            // Use basePath from accountOverrides root, or default to "/account"
-            const basePathRaw = accountOverrides?.basePath ?? "/account"
-            const basePath = basePathRaw.endsWith("/")
-                ? basePathRaw.slice(0, -1)
-                : basePathRaw
-
             return {
-                basePath,
+                basePath: accountBasePath,
                 fields: ["image", "name"],
                 viewPaths: accountViewPaths
             }
         }
 
-        // basePath can come from either:
-        // 1. accountProp.basePath (inside the account config object)
-        // 2. accountOverrides.basePath (at the root, from Partial<AuthPluginOverrides>)
-        // Priority: accountProp.basePath > accountOverrides.basePath > "/account"
-        const basePathRaw =
-            accountProp.basePath ?? accountOverrides?.basePath ?? "/account"
-        const basePath = basePathRaw.endsWith("/")
-            ? basePathRaw.slice(0, -1)
-            : basePathRaw
-
         return {
-            basePath,
+            basePath: accountBasePath,
             fields: accountProp.fields || ["image", "name"],
             viewPaths: { ...accountViewPaths, ...accountProp.viewPaths }
         }
-    }, [accountOverrides?.account, accountOverrides?.basePath])
+    }, [accountBasePath, accountOverrides.account])
 
     const deleteUser = useMemo<DeleteUserOptions | undefined>(() => {
         if (!accountOverrides?.deleteUser) return
@@ -239,15 +198,8 @@ export function BetterAuthPluginProvider({
         if (!organizationProp) return undefined
 
         if (organizationProp === true) {
-            // Use basePath from organizationOverrides root, or default to "/organization"
-            const basePathRaw =
-                organizationOverrides?.basePath ?? "/organization"
-            const basePath = basePathRaw.endsWith("/")
-                ? basePathRaw.slice(0, -1)
-                : basePathRaw
-
             return {
-                basePath,
+                basePath: organizationBasePath,
                 viewPaths: organizationViewPaths,
                 customRoles: []
             }
@@ -271,29 +223,17 @@ export function BetterAuthPluginProvider({
             }
         }
 
-        // basePath can come from either:
-        // 1. organizationProp.basePath (inside the organization config object)
-        // 2. organizationOverrides.basePath (at the root, from Partial<AuthPluginOverrides>)
-        // Priority: organizationProp.basePath > organizationOverrides.basePath > "/organization"
-        const basePathRaw =
-            organizationProp.basePath ??
-            organizationOverrides?.basePath ??
-            "/organization"
-        const basePath = basePathRaw.endsWith("/")
-            ? basePathRaw.slice(0, -1)
-            : basePathRaw
-
         return {
             ...organizationProp,
             logo,
-            basePath,
+            basePath: organizationBasePath,
             customRoles: organizationProp.customRoles || [],
             viewPaths: {
                 ...organizationViewPaths,
                 ...organizationProp.viewPaths
             }
         }
-    }, [organizationOverrides?.organization, organizationOverrides?.basePath])
+    }, [organizationBasePath, organizationOverrides.organization])
 
     const teams = useMemo<TeamOptionsContext | undefined>(() => {
         const teamsProp =
@@ -482,7 +422,7 @@ export function BetterAuthPluginProvider({
                 key,
                 translate(`better-auth-ui.${key}`, defaultValue)
             ])
-        ) as AuthLocalization
+        ) as typeof authLocalization
     }, [authOverrides.localization, translate])
 
     const renderToast = useMemo(() => createRenderToast(notify), [notify])
@@ -490,39 +430,40 @@ export function BetterAuthPluginProvider({
     const hooks = useMemo(() => {
         return {
             ...defaultHooks,
-            ...authOverrides.hooks,
-            ...(auth?.can ? { useHasPermission: useStackHasPermission } : {})
+            ...authOverrides.hooks
         }
-    }, [auth, defaultHooks, authOverrides.hooks])
-
-    const onSessionChange = useMemo(
-        () => async () => {
-            await refetchIdentity()
-            await router?.refresh?.()
-        },
-        [refetchIdentity, router?.refresh]
-    )
+    }, [defaultHooks, authOverrides.hooks])
 
     const mutators = useMemo(() => {
         return { ...defaultMutators, ...authOverrides.mutators }
     }, [defaultMutators, authOverrides.mutators])
 
-    // Remove trailing slash from baseURL — use auth-specific value only
-    const baseURL = authOverrides.baseURL
-        ? authOverrides.baseURL.endsWith("/")
-            ? authOverrides.baseURL.slice(0, -1)
-            : authOverrides.baseURL
-        : ""
+    const baseURL = authLocation.crossOrigin
+        ? ""
+        : (authSite?.baseURL.replace(/\/+$/, "") ?? "")
 
-    // Remove trailing slash from basePath — use auth-specific value only.
-    // accountOverrides/organizationOverrides inherit basePath from AuthPluginOverrides
-    // but their basePath refers to their own route prefix (e.g. "/account"), not the
-    // auth prefix. Spreading them would corrupt auth navigation links.
-    const basePath = authOverrides.basePath
-        ? authOverrides.basePath.endsWith("/")
-            ? authOverrides.basePath.slice(0, -1)
-            : authOverrides.basePath
-        : "/auth"
+    const navigate = (href: string) => {
+        if (/^https?:\/\//.test(href)) return defaultNavigate(href)
+        if (router?.navigate) return router.navigate(href)
+        return defaultNavigate(href)
+    }
+
+    const replace = (href: string) => {
+        if (/^https?:\/\//.test(href)) return defaultReplace(href)
+        if (router?.navigate) return router.navigate(href)
+        return defaultReplace(href)
+    }
+
+    const LinkComponent: Link = (props) => {
+        if (/^https?:\/\//.test(props.href)) return <DefaultLink {...props} />
+
+        const RouterLink = router?.Link as typeof DefaultLink | undefined
+        return RouterLink ? (
+            <RouterLink {...props} />
+        ) : (
+            <DefaultLink {...props} />
+        )
+    }
 
     const emailVerification = useMemo(() => {
         const ev = authOverrides.emailVerification
@@ -536,7 +477,7 @@ export function BetterAuthPluginProvider({
     const contextValue: AuthUIContextType = {
         authClient,
         avatar,
-        basePath: basePath === "/" ? "" : basePath,
+        basePath: authBasePath,
         baseURL,
         // Auth-specific feature flags — always read from authOverrides, never from the
         // merged blob, so account/org overrides can't silently overwrite them.
@@ -557,10 +498,10 @@ export function BetterAuthPluginProvider({
         signUp,
         social,
         toast: renderToast,
-        navigate: router?.navigate || defaultNavigate,
-        replace: router?.navigate || defaultReplace,
+        navigate,
+        replace,
         viewPaths,
-        Link: (router?.Link as typeof DefaultLink | undefined) || DefaultLink,
+        Link: LinkComponent,
         apiKey: authOverrides.apiKey,
         gravatar: authOverrides.gravatar,
         additionalFields: authOverrides.additionalFields,
@@ -574,7 +515,7 @@ export function BetterAuthPluginProvider({
         localizeErrors: authOverrides.localizeErrors ?? true,
         persistClient: authOverrides.persistClient,
         optimistic: authOverrides.optimistic,
-        onSessionChange
+        onSessionChange: authOverrides.onSessionChange
     }
 
     return (

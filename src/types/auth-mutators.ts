@@ -17,5 +17,5 @@ export interface AuthMutators {
         data: Record<string, unknown>
     }>
     updateUser: MutateFn
-    unlinkAccount: MutateFn<{ providerId: string; accountId?: string }>
+    unlinkAccount: MutateFn<{ accountId: string }>
 }
