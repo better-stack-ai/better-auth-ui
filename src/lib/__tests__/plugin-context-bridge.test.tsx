@@ -524,6 +524,33 @@ describe("mutators — all present and call correct endpoints", () => {
             expect.objectContaining({ name: "Jane" })
         )
     })
+
+    it("supplies the provider required by Better Auth 1.6 when unlinking", async () => {
+        const ctx = renderBridge()
+
+        await ctx.mutators.unlinkAccount({ accountId: "github-account" })
+
+        expect(mockAuthClient.unlinkAccount).toHaveBeenCalledWith({
+            accountId: "github-account",
+            providerId: "github-account",
+            fetchOptions: { throw: true }
+        })
+    })
+
+    it("forwards an explicit unlink provider alongside the account ID", async () => {
+        const ctx = renderBridge()
+
+        await ctx.mutators.unlinkAccount({
+            accountId: "github-account",
+            providerId: "github"
+        })
+
+        expect(mockAuthClient.unlinkAccount).toHaveBeenCalledWith({
+            accountId: "github-account",
+            providerId: "github",
+            fetchOptions: { throw: true }
+        })
+    })
 })
 
 // ── 9. Hooks — structure and endpoint correctness ─────────────────────────────

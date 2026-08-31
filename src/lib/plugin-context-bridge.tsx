@@ -307,6 +307,7 @@ export function BetterAuthPluginProvider({
             unlinkAccount: (params) =>
                 authClient.unlinkAccount({
                     ...params,
+                    providerId: params.providerId ?? params.accountId,
                     fetchOptions: { throw: true }
                 })
         } as AuthMutators

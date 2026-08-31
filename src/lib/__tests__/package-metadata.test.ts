@@ -31,31 +31,31 @@ describe("package dependency compatibility", () => {
     })
 
     /**
-     * @see https://github.com/better-stack-ai/better-auth-ui/issues/20
+     * @see https://github.com/better-stack-ai/better-auth-ui/issues/22
      */
-    it("publishes the BTST v3 RC with one compatible auth dependency set", async () => {
+    it("publishes RC4 with the retained Better Auth 1.6 cohort", async () => {
         const manifest = await readPackageManifest()
 
-        expect(manifest.version).toBe("2.0.0-rc.3")
+        expect(manifest.version).toBe("2.0.0-rc.4")
         expect(manifest.peerDependencies).toMatchObject({
-            "@better-auth/api-key": "1.7.2",
-            "@better-auth/passkey": "1.7.2",
-            "@better-fetch/fetch": "1.3.1",
+            "@better-auth/api-key": "1.6.16",
+            "@better-auth/passkey": "1.6.16",
+            "@better-fetch/fetch": "1.2.2",
             "@btst/stack": "^3.0.0-rc.3",
             "@btst/yar": "^1.3.2",
             "@tanstack/react-query": ">=5.100.14",
-            "better-auth": "1.7.2"
+            "better-auth": "1.6.16"
         })
         expect(manifest.devDependencies).toMatchObject({
-            "@better-auth/api-key": "1.7.2",
-            "@better-auth/core": "1.7.2",
-            "@better-auth/passkey": "1.7.2",
-            "@better-auth/utils": "0.4.2",
-            "@better-fetch/fetch": "1.3.1",
+            "@better-auth/api-key": "1.6.16",
+            "@better-auth/core": "1.6.16",
+            "@better-auth/passkey": "1.6.16",
+            "@better-auth/utils": "0.4.1",
+            "@better-fetch/fetch": "1.2.2",
             "@btst/stack": "3.0.0-rc.3",
             "@btst/yar": "1.3.2",
-            "better-auth": "1.7.2",
-            "better-call": "1.4.0"
+            "better-auth": "1.6.16",
+            "better-call": "1.3.6"
         })
         expect(manifest.dependencies).not.toHaveProperty("@better-auth/api-key")
         expect(manifest.dependencies).not.toHaveProperty("@better-fetch/fetch")
