@@ -224,10 +224,16 @@ describe("field routing — auth-specific fields come from authOverrides only", 
 
     it("uses authOverrides feature flags — not org overrides", () => {
         const ctx = renderBridge(
-            { magicLink: true, passkey: true, twoFactor: ["totp"] },
+            {
+                apiKey: true,
+                magicLink: true,
+                passkey: true,
+                twoFactor: ["totp"]
+            },
             {},
-            { magicLink: false, passkey: false } // org tries to override — must be ignored
+            { apiKey: false, magicLink: false, passkey: false } // org tries to override — must be ignored
         )
+        expect(ctx.apiKey).toBe(true)
         expect(ctx.magicLink).toBe(true)
         expect(ctx.passkey).toBe(true)
         expect(ctx.twoFactor).toEqual(["totp"])
@@ -328,9 +334,14 @@ describe("avatar normalization", () => {
 
     it("avatar with upload → size defaults to 256", () => {
         const upload = vi.fn()
-        const ctx = renderBridge({}, { avatar: { upload } })
+        const deleteAvatar = vi.fn()
+        const ctx = renderBridge(
+            {},
+            { avatar: { upload, delete: deleteAvatar } }
+        )
         expect(ctx.avatar?.size).toBe(256)
         expect(ctx.avatar?.upload).toBe(upload)
+        expect(ctx.avatar?.delete).toBe(deleteAvatar)
     })
 
     it("avatar without upload → size defaults to 128", () => {
@@ -509,6 +520,28 @@ describe("mutators — all present and call correct endpoints", () => {
         )
     })
 
+    it("deletePasskey calls authClient.passkey.deletePasskey", async () => {
+        const ctx = renderBridge({ passkey: true })
+        await ctx.mutators.deletePasskey({ id: "passkey-1" })
+        expect(mockAuthClient.passkey.deletePasskey).toHaveBeenCalledWith({
+            id: "passkey-1",
+            fetchOptions: { throw: true }
+        })
+    })
+
+    it("updateOrganization calls authClient.organization.update", async () => {
+        const ctx = renderBridge({}, {}, { organization: true })
+        await ctx.mutators.updateOrganization({
+            organizationId: "org-1",
+            data: { name: "Updated" }
+        })
+        expect(mockAuthClient.organization.update).toHaveBeenCalledWith({
+            organizationId: "org-1",
+            data: { name: "Updated" },
+            fetchOptions: { throw: true }
+        })
+    })
+
     it("revokeSession calls authClient.revokeSession", async () => {
         const ctx = renderBridge()
         await ctx.mutators.revokeSession({ token: "tok" })
@@ -523,6 +556,21 @@ describe("mutators — all present and call correct endpoints", () => {
         expect(mockAuthClient.updateUser).toHaveBeenCalledWith(
             expect.objectContaining({ name: "Jane" })
         )
+    })
+
+    it("forwards the required unlink provider alongside the account ID", async () => {
+        const ctx = renderBridge()
+
+        await ctx.mutators.unlinkAccount({
+            accountId: "github-account",
+            providerId: "github"
+        })
+
+        expect(mockAuthClient.unlinkAccount).toHaveBeenCalledWith({
+            accountId: "github-account",
+            providerId: "github",
+            fetchOptions: { throw: true }
+        })
     })
 })
 

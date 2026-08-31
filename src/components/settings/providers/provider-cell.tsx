@@ -82,7 +82,8 @@ export function ProviderCell({
 
         try {
             await unlinkAccount({
-                accountId: account.accountId
+                accountId: account.accountId,
+                providerId: provider.provider
             })
 
             await refetch?.()
