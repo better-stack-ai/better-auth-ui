@@ -103,8 +103,8 @@ importers:
         specifier: 2.4.16
         version: 2.4.16
       '@btst/stack':
-        specifier: 3.0.0-rc.4
-        version: 3.0.0-rc.4(cae083ebdee82309fdf4ba9ea817af6d)
+        specifier: 3.0.0
+        version: 3.0.0(cae083ebdee82309fdf4ba9ea817af6d)
       '@btst/yar':
         specifier: 1.3.2
         version: 1.3.2(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react@19.1.0)
@@ -417,8 +417,8 @@ packages:
       '@better-auth/utils': 0.4.1
       better-auth: 1.6.16
 
-  '@btst/stack@3.0.0-rc.4':
-    resolution: {integrity: sha512-iZsDP1c+EMytCAt1tahnsmUOWIx9WfCdfLlAFRIFR9pJ0xlfEOGZ4koycxUXObc9WyOqQ0bcM8422rYuFSPMHg==}
+  '@btst/stack@3.0.0':
+    resolution: {integrity: sha512-tY1I8CU1bt2k4MzW6ScjX2viZ/JT/TbFcASR4KGNXs9uFRZUglznC3BEj1C1wAtIWhvfDRisxK+x10FMWs4XVA==}
     peerDependencies:
       '@ai-sdk/react': '>=2.0.0'
       '@aws-sdk/client-s3': '>=3.0.0'
@@ -4393,7 +4393,7 @@ snapshots:
       '@better-auth/utils': 0.4.1
       better-auth: 1.6.16(c397378e994be405f0e2dd7ce3fe42f2)
 
-  '@btst/stack@3.0.0-rc.4(cae083ebdee82309fdf4ba9ea817af6d)':
+  '@btst/stack@3.0.0(cae083ebdee82309fdf4ba9ea817af6d)':
     dependencies:
       '@ai-sdk/react': 3.0.147(react@19.1.0)(zod@4.4.3)
       '@btst/db': 2.2.3(@better-auth/core@1.6.16(@better-auth/utils@0.4.1)(@better-fetch/fetch@1.2.2)(@opentelemetry/api@1.9.0)(better-call@1.3.6(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(@better-auth/utils@0.4.1)(better-auth@1.6.16(c397378e994be405f0e2dd7ce3fe42f2))

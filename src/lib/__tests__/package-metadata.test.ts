@@ -52,7 +52,7 @@ describe("package dependency compatibility", () => {
             "@better-auth/passkey": "1.6.16",
             "@better-auth/utils": "0.4.1",
             "@better-fetch/fetch": "1.2.2",
-            "@btst/stack": "3.0.0-rc.4",
+            "@btst/stack": "3.0.0",
             "@btst/yar": "1.3.2",
             "better-auth": "1.6.16",
             "better-call": "1.3.6"
