@@ -12,20 +12,19 @@ BTST authorization is separate and optional. This package does not convert a
 Better Auth user into a BTST identity or export client/server authorization
 adapters.
 
-## Install the release candidate
+## Install the stable packages
 
 The minimal integration uses the auth and account plugins:
 
 ```bash
-pnpm add @btst/stack@next @btst/better-auth-ui@next @btst/yar@^1.3.2
+pnpm add @btst/stack@^3.0.0 @btst/better-auth-ui@^2.0.0 @btst/yar@^1.3.2
 ```
 
-The v3 release-candidate line uses the Better Auth 1.6.16 cohort retained by
+The stable v3 line uses the Better Auth 1.6.16 cohort retained by
 `@btst/db@2.2.3`: `better-auth`, `@better-auth/core`, API key, and passkey are
 1.6.16; `@better-auth/utils` is 0.4.1; `@better-fetch/fetch` is 1.2.2; and
-`better-call` is 1.3.6. Keep those versions aligned exactly while evaluating
-the release candidate. Do not combine this companion candidate with a Better
-Auth 1.7 dependency graph.
+`better-call` is 1.3.6. Keep those versions aligned exactly. Do not combine
+this companion release with a Better Auth 1.7 dependency graph.
 
 Enable organization, API-key, passkey, multi-session, and similar UI only when
 the matching Better Auth plugins are configured in your application.
