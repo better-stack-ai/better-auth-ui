@@ -33,15 +33,15 @@ describe("package dependency compatibility", () => {
     /**
      * @see https://github.com/better-stack-ai/better-auth-ui/issues/22
      */
-    it("publishes RC4 with the retained Better Auth 1.6 cohort", async () => {
+    it("publishes 2.0.0 with the retained Better Auth 1.6 cohort", async () => {
         const manifest = await readPackageManifest()
 
-        expect(manifest.version).toBe("2.0.0-rc.4")
+        expect(manifest.version).toBe("2.0.0")
         expect(manifest.peerDependencies).toMatchObject({
             "@better-auth/api-key": "1.6.16",
             "@better-auth/passkey": "1.6.16",
             "@better-fetch/fetch": "1.2.2",
-            "@btst/stack": "^3.0.0-rc.3",
+            "@btst/stack": "^3.0.0",
             "@btst/yar": "^1.3.2",
             "@tanstack/react-query": ">=5.100.14",
             "better-auth": "1.6.16"
@@ -52,7 +52,7 @@ describe("package dependency compatibility", () => {
             "@better-auth/passkey": "1.6.16",
             "@better-auth/utils": "0.4.1",
             "@better-fetch/fetch": "1.2.2",
-            "@btst/stack": "3.0.0-rc.3",
+            "@btst/stack": "3.0.0-rc.4",
             "@btst/yar": "1.3.2",
             "better-auth": "1.6.16",
             "better-call": "1.3.6"
@@ -95,8 +95,8 @@ describe("package dependency compatibility", () => {
     })
 })
 
-describe("RC publishing", () => {
-    it("can safely publish or retry a prerelease without moving latest", async () => {
+describe("release publishing", () => {
+    it("can publish stable releases to latest and prereleases to next", async () => {
         const workflow = await readFile(
             resolve(".github/workflows/release.yml"),
             "utf8"
@@ -113,6 +113,8 @@ describe("RC publishing", () => {
         expect(workflow).toContain("run: pnpm test")
         expect(workflow).toContain("run: pnpm run build")
         expect(workflow).toContain("npm publish --access public --provenance")
+        expect(workflow).toContain("NPM_DIST_TAG=latest")
+        expect(workflow).toContain("NPM_DIST_TAG=next")
         expect(workflow).toContain(
             'npm view "@btst/better-auth-ui@$PKG_VERSION"'
         )
