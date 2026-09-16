@@ -108,12 +108,12 @@ jobs:
           set -euo pipefail
 
           PUBLISHED_VERSION=""
-          for attempt in {1..12}; do
+          for attempt in {1..90}; do
             PUBLISHED_VERSION=$(npm view "@btst/better-auth-ui@$NPM_DIST_TAG" version 2>/dev/null || true)
             if [ "$PUBLISHED_VERSION" = "$PKG_VERSION" ]; then
               break
             fi
-            echo "Waiting for npm to resolve $NPM_DIST_TAG to $PKG_VERSION (attempt $attempt/12)"
+            echo "Waiting for npm to resolve $NPM_DIST_TAG to $PKG_VERSION (attempt $attempt/90)"
             sleep 10
           done
 
