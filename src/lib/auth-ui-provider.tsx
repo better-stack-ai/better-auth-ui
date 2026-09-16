@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, type ReactNode, useMemo } from "react"
+import { createContext, type ReactNode, useContext, useMemo } from "react"
 import { toast } from "sonner"
 
 import { RecaptchaV3 } from "../components/captcha/recaptcha-v3"
@@ -726,8 +726,6 @@ export const AuthUIProvider = ({
     // Remove trailing slash from basePath
     basePath = basePath.endsWith("/") ? basePath.slice(0, -1) : basePath
 
-    const { data: sessionData } = hooks.useSession()
-
     return (
         <AuthUIContext.Provider
             value={{
@@ -761,7 +759,7 @@ export const AuthUIProvider = ({
                 ...props
             }}
         >
-            {sessionData && organization && <OrganizationRefetcher />}
+            {organization && <OrganizationSessionRefetcher />}
 
             {captcha?.provider === "google-recaptcha-v3" ? (
                 <RecaptchaV3>{children}</RecaptchaV3>
@@ -770,4 +768,10 @@ export const AuthUIProvider = ({
             )}
         </AuthUIContext.Provider>
     )
+}
+
+function OrganizationSessionRefetcher() {
+    const { hooks } = useContext(AuthUIContext)
+    const { data: sessionData } = hooks.useSession()
+    return sessionData ? <OrganizationRefetcher /> : null
 }
