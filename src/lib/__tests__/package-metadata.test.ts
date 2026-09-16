@@ -36,7 +36,7 @@ describe("package dependency compatibility", () => {
     it("supports the BTST 3.1 preview with the retained Better Auth 1.6 cohort", async () => {
         const manifest = await readPackageManifest()
 
-        expect(manifest.version).toBe("2.0.1-rc.2")
+        expect(manifest.version).toBe("2.0.1")
         expect(manifest.peerDependencies).toMatchObject({
             "@better-auth/api-key": "1.6.16",
             "@better-auth/passkey": "1.6.16",
