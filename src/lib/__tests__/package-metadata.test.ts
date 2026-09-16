@@ -33,15 +33,15 @@ describe("package dependency compatibility", () => {
     /**
      * @see https://github.com/better-stack-ai/better-auth-ui/issues/22
      */
-    it("publishes 2.0.0 with the retained Better Auth 1.6 cohort", async () => {
+    it("supports the BTST 3.1 preview with the retained Better Auth 1.6 cohort", async () => {
         const manifest = await readPackageManifest()
 
-        expect(manifest.version).toBe("2.0.0")
+        expect(manifest.version).toBe("2.0.1")
         expect(manifest.peerDependencies).toMatchObject({
             "@better-auth/api-key": "1.6.16",
             "@better-auth/passkey": "1.6.16",
             "@better-fetch/fetch": "1.2.2",
-            "@btst/stack": "^3.0.0",
+            "@btst/stack": "^3.0.0 || ^3.1.0-0",
             "@btst/yar": "^1.3.2",
             "@tanstack/react-query": ">=5.100.14",
             "better-auth": "1.6.16"
