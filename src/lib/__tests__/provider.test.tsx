@@ -11,6 +11,7 @@ import { renderToString } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 import { accountClientPlugin, authClientPlugin } from "../../client"
 import { AuthProvider } from "../../components/auth/auth-provider"
+import { AdminPage, AuthPage } from "../../plugins/pages"
 import { organizationPlugin } from "../auth/organization-plugin"
 import { useAuthNotifications } from "../notifications"
 import { BetterAuthPluginProvider } from "../plugin-context-bridge"
@@ -228,4 +229,26 @@ describe("BTST provider services", () => {
         act(() => root.unmount())
         container.remove()
     })
+})
+
+it("renders unknown or disabled BTST pages without requesting native feature data", async () => {
+    const request = vi.fn()
+    const queryClient = new QueryClient()
+    const stack = createStack(queryClient)
+    const authClient = createAuthClient({
+        fetchOptions: { customFetchImpl: request }
+    })
+    const view = render(
+        <StackProvider stack={stack} overrides={{ auth: { authClient } }}>
+            <AuthPage path="device-authorization" />
+        </StackProvider>
+    )
+    expect(await screen.findByText("Page not found")).toBeTruthy()
+    view.rerender(
+        <StackProvider stack={stack} overrides={{ auth: { authClient } }}>
+            <AdminPage path="users" />
+        </StackProvider>
+    )
+    expect(await screen.findByText("Page not found")).toBeTruthy()
+    expect(request).not.toHaveBeenCalled()
 })

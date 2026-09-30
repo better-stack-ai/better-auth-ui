@@ -15,85 +15,68 @@ import {
     matchQuery,
     useQueryClient
 } from "@tanstack/react-query"
-import { useEffect } from "react"
-import { useAuthNotifications } from "../../lib/notifications"
+import { useContext, useEffect } from "react"
+import { registerErrorNotifications } from "../../lib/error-notifications"
+import {
+    AuthNotificationsContext,
+    useAuthNotifications
+} from "../../lib/notifications"
 
 export function ErrorToaster() {
     const toast = useAuthNotifications()
+    const customNotifications = useContext(AuthNotificationsContext)
     const { localization } = useAuth()
     const queryClient = useQueryClient()
 
     useEffect(() => {
-        const queryCache = queryClient.getQueryCache()
-        const previousQueryOnError = queryCache.config.onError
+        return registerErrorNotifications(queryClient, {
+            priority: customNotifications ? 1 : 0,
+            query: (error, query) => {
+                if (!matchQuery({ queryKey: authQueryKeys.all }, query)) return
+                if (getAuthErrorPresentation(query.meta) !== "toast") return
 
-        queryCache.config.onError = (error, query) => {
-            previousQueryOnError?.(error, query)
+                if (getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED") return
+                const message = getAuthErrorMessage(error, localization)
+                if (message) {
+                    console.error("[Better Auth UI]", error)
+                    toast.error(message)
+                }
+            },
+            mutation: (error, variables, onMutateResult, mutation, context) => {
+                if (
+                    !matchMutation(
+                        { mutationKey: authMutationKeys.all },
+                        mutation
+                    )
+                ) {
+                    return
+                }
+                if (getAuthErrorPresentation(mutation.meta) !== "toast") return
+                // Every form that sets a new password renders this one against the
+                // password field, so a toast would just repeat it.
+                if (isPasswordCompromisedError(error)) return
 
-            if (!matchQuery({ queryKey: authQueryKeys.all }, query)) return
-            if (getAuthErrorPresentation(query.meta) !== "toast") return
-
-            if (getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED") return
-            const message = getAuthErrorMessage(error, localization)
-            if (message) {
-                console.error("[Better Auth UI]", error)
-                toast.error(message)
-            }
-        }
-
-        const mutationCache = queryClient.getMutationCache()
-        const previousMutationOnError = mutationCache.config.onError
-
-        mutationCache.config.onError = (
-            error,
-            variables,
-            onMutateResult,
-            mutation,
-            context
-        ) => {
-            previousMutationOnError?.(
-                error,
-                variables,
-                onMutateResult,
-                mutation,
-                context
-            )
-
-            if (
-                !matchMutation({ mutationKey: authMutationKeys.all }, mutation)
-            ) {
-                return
-            }
-            if (getAuthErrorPresentation(mutation.meta) !== "toast") return
-            // Every form that sets a new password renders this one against the
-            // password field, so a toast would just repeat it.
-            if (isPasswordCompromisedError(error)) return
-
-            if (
-                getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED" &&
-                !matchMutation(
-                    { mutationKey: oneTapMutationKeys.prompt },
-                    mutation
+                if (
+                    getAuthErrorCode(error) === "EMAIL_NOT_VERIFIED" &&
+                    !matchMutation(
+                        { mutationKey: oneTapMutationKeys.prompt },
+                        mutation
+                    )
+                ) {
+                    return
+                }
+                const message = getAuthErrorMessage(
+                    error,
+                    localization,
+                    mutation.options.mutationKey
                 )
-            ) {
-                return
+                if (message) {
+                    console.error("[Better Auth UI]", error)
+                    toast.error(message)
+                }
             }
-            const message = getAuthErrorMessage(
-                error,
-                localization,
-                mutation.options.mutationKey
-            )
-            if (message) {
-                console.error("[Better Auth UI]", error)
-                toast.error(message)
-            }
-        }
-
-        return () => {
-            queryCache.config.onError = previousQueryOnError
-            mutationCache.config.onError = previousMutationOnError
-        }
-    }, [queryClient, localization, toast.error])
+        })
+    }, [queryClient, localization, toast.error, customNotifications])
 
     return null
 }

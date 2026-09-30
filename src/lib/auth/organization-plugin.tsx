@@ -1,4 +1,6 @@
-"use client"
+import { withLocalizedTabs } from "./localized-tabs"
+
+;("use client")
 
 import { createAuthPlugin } from "@better-auth-ui/core"
 import {
@@ -16,24 +18,32 @@ export const organizationPlugin = createAuthPlugin(
     (options: OrganizationPluginOptions = {}) => {
         const core = coreOrganizationPlugin(options)
 
-        return {
-            ...core,
-            localization: core.localization as OrganizationLocalization,
-            views: {
-                auth: { acceptInvitation: AcceptInvitation }
+        return withLocalizedTabs(
+            {
+                ...core,
+                localization: core.localization as OrganizationLocalization,
+                views: {
+                    auth: { acceptInvitation: AcceptInvitation }
+                },
+                settingsTabs: [
+                    {
+                        view: "organizations",
+                        label: (
+                            <>
+                                <Briefcase className="text-muted-foreground" />
+                                {core.localization.organizations}
+                            </>
+                        ),
+                        component: OrganizationsSettings
+                    }
+                ]
             },
-            settingsTabs: [
-                {
-                    view: "organizations",
-                    label: (
-                        <>
-                            <Briefcase className="text-muted-foreground" />
-                            {core.localization.organizations}
-                        </>
-                    ),
-                    component: OrganizationsSettings
-                }
-            ]
-        }
+            (localization) => (
+                <>
+                    <Briefcase className="text-muted-foreground" />
+                    {localization.organizations}
+                </>
+            )
+        )
     }
 )

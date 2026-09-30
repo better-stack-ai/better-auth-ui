@@ -8,5 +8,8 @@ export type AuthNotifications = {
     error: (message: string) => unknown
 }
 
-export const AuthNotificationsContext = createContext<AuthNotifications>(toast)
-export const useAuthNotifications = () => useContext(AuthNotificationsContext)
+export const AuthNotificationsContext = createContext<AuthNotifications | null>(
+    null
+)
+export const useAuthNotifications = (): AuthNotifications =>
+    useContext(AuthNotificationsContext) ?? toast

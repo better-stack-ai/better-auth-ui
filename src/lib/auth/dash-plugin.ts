@@ -5,13 +5,13 @@ import {
 } from "@better-auth-ui/core/plugins/dash"
 import { Activity } from "lucide-react"
 import { createElement } from "react"
-
 import {
     AdminActivity,
     AdminUserActivity,
     OrganizationActivity,
     UserActivity
 } from "../../components/auth/dash/activity"
+import { withLocalizedTabs } from "./localized-tabs"
 
 const activityLabel = (label: string) =>
     createElement(
@@ -25,50 +25,61 @@ export const dashPlugin = createAuthPlugin(
     coreDashPlugin.id,
     (options: DashPluginOptions = {}) => {
         const core = coreDashPlugin(options)
-        return {
-            ...core,
-            ...(core.admin
-                ? {
-                      adminTabs: [
-                          {
-                              id: "activity",
-                              path: core.viewPaths.settings.activity,
-                              label: activityLabel(core.localization.activity),
-                              component: AdminActivity
-                          }
-                      ],
-                      adminUserTabs: [
-                          {
-                              id: "activity",
-                              label: activityLabel(core.localization.activity),
-                              component: AdminUserActivity
-                          }
-                      ]
-                  }
-                : {}),
-            ...(core.user
-                ? {
-                      settingsTabs: [
-                          {
-                              view: "activity" as const,
-                              label: activityLabel(core.localization.activity),
-                              component: UserActivity
-                          }
-                      ]
-                  }
-                : {}),
-            ...(core.organization
-                ? {
-                      organizationTabs: [
-                          {
-                              id: "activity",
-                              path: core.viewPaths.settings.activity,
-                              label: activityLabel(core.localization.activity),
-                              component: OrganizationActivity
-                          }
-                      ]
-                  }
-                : {})
-        }
+        return withLocalizedTabs(
+            {
+                ...core,
+                ...(core.admin
+                    ? {
+                          adminTabs: [
+                              {
+                                  id: "activity",
+                                  path: core.viewPaths.settings.activity,
+                                  label: activityLabel(
+                                      core.localization.activity
+                                  ),
+                                  component: AdminActivity
+                              }
+                          ],
+                          adminUserTabs: [
+                              {
+                                  id: "activity",
+                                  label: activityLabel(
+                                      core.localization.activity
+                                  ),
+                                  component: AdminUserActivity
+                              }
+                          ]
+                      }
+                    : {}),
+                ...(core.user
+                    ? {
+                          settingsTabs: [
+                              {
+                                  view: "activity" as const,
+                                  label: activityLabel(
+                                      core.localization.activity
+                                  ),
+                                  component: UserActivity
+                              }
+                          ]
+                      }
+                    : {}),
+                ...(core.organization
+                    ? {
+                          organizationTabs: [
+                              {
+                                  id: "activity",
+                                  path: core.viewPaths.settings.activity,
+                                  label: activityLabel(
+                                      core.localization.activity
+                                  ),
+                                  component: OrganizationActivity
+                              }
+                          ]
+                      }
+                    : {})
+            },
+            (localization) => activityLabel(localization.activity)
+        )
     }
 )

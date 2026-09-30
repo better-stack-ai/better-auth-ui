@@ -5,7 +5,6 @@ import {
 } from "@better-auth-ui/core/plugins/oauth-provider"
 import { Code2 } from "lucide-react"
 import { createElement } from "react"
-
 import { AuthorizedApplications } from "../../components/auth/oauth-provider/authorized-applications"
 import {
     OrganizationOAuthClients,
@@ -14,6 +13,7 @@ import {
 import { OAuthConsent } from "../../components/auth/oauth-provider/oauth-consent"
 import { OAuthSelectAccount } from "../../components/auth/oauth-provider/oauth-select-account"
 import { OAuthSignUp } from "../../components/auth/oauth-provider/oauth-sign-up"
+import { withLocalizedTabs } from "./localized-tabs"
 
 const clientManagementLabel = (label: string) =>
     createElement(
@@ -28,49 +28,52 @@ export const oauthProviderPlugin = createAuthPlugin(
     (options: OAuthProviderPluginOptions = {}) => {
         const core = coreOAuthProviderPlugin(options)
 
-        return {
-            ...core,
-            views: {
-                auth: {
-                    oauthConsent: OAuthConsent,
-                    // A route of its own rather than an override of the built-in
-                    // `signUp` view — ordinary sign-up stays untouched.
-                    oauthSignUp: OAuthSignUp,
-                    oauthSelectAccount: OAuthSelectAccount
-                }
+        return withLocalizedTabs(
+            {
+                ...core,
+                views: {
+                    auth: {
+                        oauthConsent: OAuthConsent,
+                        // A route of its own rather than an override of the built-in
+                        // `signUp` view — ordinary sign-up stays untouched.
+                        oauthSignUp: OAuthSignUp,
+                        oauthSelectAccount: OAuthSelectAccount
+                    }
+                },
+                ...(core.showConnectedApplications
+                    ? { securityCards: [AuthorizedApplications] }
+                    : {}),
+                ...(core.clientManagement
+                    ? {
+                          settingsTabs: [
+                              {
+                                  view: "oauthClients" as const,
+                                  label: clientManagementLabel(
+                                      core.localization.oauthClients
+                                  ),
+                                  component: UserOAuthClients
+                              }
+                          ]
+                      }
+                    : {}),
+                ...(core.organizationClientManager
+                    ? {
+                          organizationTabs: [
+                              {
+                                  id: "oauthClients",
+                                  path:
+                                      options.clientManagementPath ??
+                                      "oauth-clients",
+                                  label: clientManagementLabel(
+                                      core.localization.oauthClients
+                                  ),
+                                  component: OrganizationOAuthClients
+                              }
+                          ]
+                      }
+                    : {})
             },
-            ...(core.showConnectedApplications
-                ? { securityCards: [AuthorizedApplications] }
-                : {}),
-            ...(core.clientManagement
-                ? {
-                      settingsTabs: [
-                          {
-                              view: "oauthClients" as const,
-                              label: clientManagementLabel(
-                                  core.localization.oauthClients
-                              ),
-                              component: UserOAuthClients
-                          }
-                      ]
-                  }
-                : {}),
-            ...(core.organizationClientManager
-                ? {
-                      organizationTabs: [
-                          {
-                              id: "oauthClients",
-                              path:
-                                  options.clientManagementPath ??
-                                  "oauth-clients",
-                              label: clientManagementLabel(
-                                  core.localization.oauthClients
-                              ),
-                              component: OrganizationOAuthClients
-                          }
-                      ]
-                  }
-                : {})
-        }
+            (localization) => clientManagementLabel(localization.oauthClients)
+        )
     }
 )
