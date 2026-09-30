@@ -8,8 +8,11 @@ TanStack Query 5.101.2 or newer, and Better Auth 1.7.6. Install the matching
 `@better-auth/api-key` and `@better-auth/passkey` 1.7.6 peers.
 
 ```sh
-pnpm add @btst/better-auth-ui@3 @btst/stack@4 @btst/yar@^1.3.2 better-auth@1.7.6 @better-auth/api-key@1.7.6 @better-auth/passkey@1.7.6 @tanstack/react-query@^5.101.2 @tanstack/query-core@^5.101.2
+pnpm add @btst/better-auth-ui@3 @btst/stack@4 @btst/yar@^1.3.2 better-auth@1.7.6 @better-auth/api-key@1.7.6 @better-auth/passkey@1.7.6 @tanstack/react-query@5.102.0 @tanstack/query-core@5.102.0
 ```
+
+Keep `@tanstack/react-query` and `@tanstack/query-core` on the same resolved
+version; the coordinated BTST 4 upgrade uses 5.102.0 for both.
 
 Import the package's Tailwind source registration after your Tailwind import:
 
