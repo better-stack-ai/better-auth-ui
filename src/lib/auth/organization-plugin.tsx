@@ -1,6 +1,4 @@
-import { withLocalizedTabs } from "./localized-tabs"
-
-;("use client")
+"use client"
 
 import { createAuthPlugin } from "@better-auth-ui/core"
 import {
@@ -9,9 +7,9 @@ import {
     type OrganizationPluginOptions
 } from "@better-auth-ui/core/plugins/organization"
 import { Briefcase } from "lucide-react"
-
 import { AcceptInvitation } from "../../components/auth/organization/accept-invitation"
 import { OrganizationsSettings } from "../../components/auth/organization/organizations-settings"
+import { withLocalizedTabs } from "./localized-tabs"
 
 export const organizationPlugin = createAuthPlugin(
     coreOrganizationPlugin.id,

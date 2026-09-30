@@ -37,6 +37,10 @@ The two upstream shadcn form/profile regression test files are preserved under
      `src/lib/notifications.tsx`; the standalone default is sonner. Each React
      component that uses a toast calls this hook once, and effects include the
      notification method in their dependency lists.
+   - `src/lib/error-notifications.ts` deduplicates cache errors across nested
+     providers and preserves application cache handlers.
+   - `src/lib/auth/localized-tabs.ts` refreshes React tab labels after upstream
+     locale and BTST translations resolve; preserve native localization resolvers.
    - `src/lib/utils.ts` uses the existing clsx/tailwind-merge primitives.
    - Package branding, ESM exports, generated plugin subpaths, Tailwind source CSS,
      and dependency placement belong to this fork.
