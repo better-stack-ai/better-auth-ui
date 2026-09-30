@@ -90,6 +90,9 @@ importers:
       '@better-auth/stripe':
         specifier: 1.7.6
         version: 1.7.6(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(better-auth@1.7.6(5f843cd677675be9c690935447f449db))(better-call@1.4.0(zod@4.4.3))(stripe@22.6.2(@types/node@25.5.0))
+      '@better-auth/utils':
+        specifier: 0.4.2
+        version: 0.4.2
       '@better-fetch/fetch':
         specifier: 1.3.2
         version: 1.3.2
@@ -97,8 +100,8 @@ importers:
         specifier: 2.4.16
         version: 2.4.16
       '@btst/stack':
-        specifier: 3.1.2
-        version: 3.1.2(be8ca0d78f7921a825f002f1a2ae6ff5)
+        specifier: 4.0.0
+        version: 4.0.0(be8ca0d78f7921a825f002f1a2ae6ff5)
       '@btst/yar':
         specifier: 1.3.2
         version: 1.3.2(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react@19.2.6)
@@ -564,15 +567,15 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@btst/db@2.2.3':
-    resolution: {integrity: sha512-tbx0o9mJnv3y5WVole5TZQwMMVmboamVJxsSeyMZH3O4qF9CNdEg6NfiR9zm/b81eO7ie6CftTWT9R7pJ4msSA==}
+  '@btst/db@3.0.0':
+    resolution: {integrity: sha512-H3RALKvQfuhbfM2bTZUTZsQnFw2APkv6d+z87jzfmsEyG6jQ8KYqfzP2w/3FiYhFkutepxSBF9+X4XRpo+5BQw==}
     peerDependencies:
-      '@better-auth/core': 1.6.16
-      '@better-auth/utils': 0.4.1
-      better-auth: 1.6.16
+      '@better-auth/core': 1.7.6
+      '@better-auth/utils': 0.4.2
+      better-auth: 1.7.6
 
-  '@btst/stack@3.1.2':
-    resolution: {integrity: sha512-m45K/R+Tt9jXwgLg+0yB69ynqOQrUXT9Dn/3J7iAlkupKkgkmF6iM+lLWvo6du6qahHGfE3PJjXJK5nQHoYNPg==}
+  '@btst/stack@4.0.0':
+    resolution: {integrity: sha512-HhYfJ2y4aURLK0wTRffJxKI2cNL7IslTJqT/LqWxb/nGFXF309sc8fgk/G853rzG9fOa6SUkNQrFqmA4jgC2Hg==}
     peerDependencies:
       '@ai-sdk/react': '>=2.0.0'
       '@aws-sdk/client-s3': '>=3.0.0'
@@ -588,7 +591,7 @@ packages:
       '@tanstack/react-router': '>=1.0.0'
       '@vercel/blob': '>=0.14.0'
       ai: '>=5.0.0'
-      better-call: 1.3.6
+      better-call: 1.4.0
       class-variance-authority: '>=0.7.0'
       clsx: '>=2.1.0'
       cmdk: '>=1.1.0'
@@ -597,8 +600,8 @@ packages:
       katex: '>=0.16.0'
       lucide-react: '>=0.469.0'
       next: '>=15.0.0'
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
+      react: '>=19.2.6'
+      react-dom: '>=19.2.6'
       react-error-boundary: '>=4.0.0'
       react-hook-form: '>=7.55.0'
       react-markdown: '>=9.1.0'
@@ -610,7 +613,7 @@ packages:
       remark-math: '>=6.0.0'
       sonner: '>=2.0.0'
       tailwind-merge: '>=2.6.0'
-      tailwindcss: '>=3.0.0'
+      tailwindcss: '>=4.3.2'
       zod: '>=4.2.0'
     peerDependenciesMeta:
       '@aws-sdk/client-s3':
@@ -5150,16 +5153,16 @@ snapshots:
   '@biomejs/cli-win32-x64@2.4.16':
     optional: true
 
-  '@btst/db@2.2.3(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(better-auth@1.7.6(5f843cd677675be9c690935447f449db))':
+  '@btst/db@3.0.0(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(better-auth@1.7.6(5f843cd677675be9c690935447f449db))':
     dependencies:
       '@better-auth/core': 1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2)
       '@better-auth/utils': 0.4.2
       better-auth: 1.7.6(5f843cd677675be9c690935447f449db)
 
-  '@btst/stack@3.1.2(be8ca0d78f7921a825f002f1a2ae6ff5)':
+  '@btst/stack@4.0.0(be8ca0d78f7921a825f002f1a2ae6ff5)':
     dependencies:
       '@ai-sdk/react': 3.0.147(react@19.2.6)(zod@4.4.3)
-      '@btst/db': 2.2.3(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(better-auth@1.7.6(5f843cd677675be9c690935447f449db))
+      '@btst/db': 3.0.0(@better-auth/core@1.7.6(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.2)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(better-auth@1.7.6(5f843cd677675be9c690935447f449db))
       '@btst/yar': 1.3.2(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.16)(react@19.2.6)
       '@hookform/resolvers': 5.2.1(react-hook-form@7.56.4(react@19.2.6))
       '@milkdown/crepe': 7.20.0(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(typescript@6.0.2)
@@ -5837,7 +5840,7 @@ snapshots:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@codemirror/view': 6.41.0
-      '@floating-ui/dom': 1.7.0
+      '@floating-ui/dom': 1.8.0
       '@milkdown/core': 7.20.0
       '@milkdown/ctx': 7.20.0
       '@milkdown/exception': 7.20.0
@@ -5930,7 +5933,7 @@ snapshots:
 
   '@milkdown/plugin-block@7.20.0':
     dependencies:
-      '@floating-ui/dom': 1.7.0
+      '@floating-ui/dom': 1.8.0
       '@milkdown/core': 7.20.0
       '@milkdown/ctx': 7.20.0
       '@milkdown/prose': 7.20.0
@@ -5987,7 +5990,7 @@ snapshots:
 
   '@milkdown/plugin-slash@7.20.0':
     dependencies:
-      '@floating-ui/dom': 1.7.0
+      '@floating-ui/dom': 1.8.0
       '@milkdown/ctx': 7.20.0
       '@milkdown/prose': 7.20.0
       '@milkdown/utils': 7.20.0
@@ -5998,7 +6001,7 @@ snapshots:
 
   '@milkdown/plugin-tooltip@7.20.0':
     dependencies:
-      '@floating-ui/dom': 1.7.0
+      '@floating-ui/dom': 1.8.0
       '@milkdown/ctx': 7.20.0
       '@milkdown/prose': 7.20.0
       '@milkdown/utils': 7.20.0
@@ -7513,7 +7516,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.32':
     dependencies:
-      '@babel/parser': 7.29.2
+      '@babel/parser': 7.29.9
       '@vue/shared': 3.5.32
       entities: 7.0.1
       estree-walker: 2.0.2
@@ -7526,7 +7529,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.32':
     dependencies:
-      '@babel/parser': 7.29.2
+      '@babel/parser': 7.29.9
       '@vue/compiler-core': 3.5.32
       '@vue/compiler-dom': 3.5.32
       '@vue/compiler-ssr': 3.5.32
