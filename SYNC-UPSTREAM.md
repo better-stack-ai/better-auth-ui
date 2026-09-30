@@ -33,6 +33,9 @@ The two upstream shadcn form/profile regression test files are preserved under
    - `src/components/auth/auth-provider.tsx` creates a provider-scoped fallback
      QueryClient instead of upstream's module-global fallback. Preserve this SSR
      isolation fix and stable upstream provider configuration.
+   - `AuthFormRoot` must remain inert until hydration attaches its submit handler,
+     and its native method must remain POST. Preserve the SSR/hydration regression
+     so slow or unavailable JavaScript cannot submit credentials into URLs.
    - Component toast calls use `useAuthNotifications()` from
      `src/lib/notifications.tsx`; the standalone default is sonner. Each React
      component that uses a toast calls this hook once, and effects include the
