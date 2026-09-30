@@ -13,6 +13,7 @@ plugins to 1.7.6. Upgrade React/React DOM to at least 19.2.6 and Tailwind to at 
 | `AuthView`, `AccountView`, `OrganizationView` | `Auth`, `Settings`, `Organization` |
 | `basePath`, `account.basePath` | Standalone `basePaths.auth`, `basePaths.settings`; Stack bridge resolves these from plugin sites |
 | `credentials` | `emailAndPassword` |
+| `emailVerification: true` | `emailAndPassword: { requireEmailVerification: true }` |
 | `social.providers` and `genericOAuth` | `socialProviders` strings or custom provider objects |
 | `magicLink`, `emailOTP`, `twoFactor`, `apiKey`, etc. booleans | `plugins: [magicLinkPlugin(), emailOtpPlugin(), twoFactorPlugin(), apiKeyPlugin(), ...]` |
 | `overrides.account.account`, `overrides.organization.organization` | Register the corresponding route factories; configure upstream plugins and profile/avatar options in `overrides.auth` |
@@ -33,9 +34,26 @@ Preserve the existing URL with:
 ```tsx
 const authOverrides = {
   authClient,
-  viewPaths: { settings: { account: "settings" } }
+  viewPaths: {
+    settings: { account: "settings" },
+    auth: { verifyEmail: "email-verification" }
+  }
 }
 ```
+
+The `auth.verifyEmail` mapping also preserves the old `/auth/email-verification`
+URL; the new default is `/auth/verify-email`. Apply the same `viewPaths` to
+`overrides.auth` and any standalone `AuthProvider` used by a header `UserButton`
+so both generate the same destinations.
+
+If email/password sign-up requires verification, replace the old UI
+`emailVerification: true` flag with
+`emailAndPassword: { requireEmailVerification: true }`. This tells the sign-up
+form to show the verification page after registration. Sign-in separately handles
+the server's `EMAIL_NOT_VERIFIED` response, so testing sign-in alone will not
+catch a missing sign-up flag. Keep the native Better Auth server's
+`emailAndPassword.requireEmailVerification: true` and verification email delivery
+configuration: the UI flag controls navigation, while the server enforces access.
 
 Organization members/invitations are now the `people` view. Dynamic roles use the
 `roles` view and require the upstream dynamic-access-control option. Page overrides
