@@ -34,6 +34,7 @@ import {
 import { Checkbox } from "../../ui/checkbox"
 import { Skeleton } from "../../ui/skeleton"
 import { Spinner } from "../../ui/spinner"
+import { useIsHydrated } from "../use-is-hydrated"
 
 type ApprovalResult = "approved" | "denied"
 
@@ -48,8 +49,9 @@ export function AgentApproval({ className }: AgentApprovalProps) {
         useAuth<AgentAuthClient>()
     const plugin = useAuthPlugin(agentAuthPlugin)
     const session = useSession(authClient)
+    const hydrated = useIsHydrated()
     const request = useMemo<AgentApprovalRequest | undefined>(() => {
-        if (typeof window === "undefined") return undefined
+        if (!hydrated) return undefined
         const query = new URLSearchParams(window.location.search)
         const agentId = query.get("agent_id")
         if (!agentId) return undefined
@@ -58,7 +60,7 @@ export function AgentApproval({ className }: AgentApprovalProps) {
             approvalId: query.get("approval_id") ?? undefined,
             userCode: query.get("code") ?? query.get("user_code") ?? undefined
         }
-    }, [])
+    }, [hydrated])
     const approval = useAgentApproval(authClient, plugin.adapter, request)
     const approve = useApproveAgent(authClient, plugin.adapter)
     const deny = useDenyAgent(authClient, plugin.adapter)
@@ -102,6 +104,10 @@ export function AgentApproval({ className }: AgentApprovalProps) {
     const denyDecision = {
         ...request,
         agentId: request?.agentId ?? ""
+    }
+
+    if (!hydrated) {
+        return <Skeleton className={cn("h-64 w-full max-w-md", className)} />
     }
 
     if (!request) {

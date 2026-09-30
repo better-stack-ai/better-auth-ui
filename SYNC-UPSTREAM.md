@@ -41,6 +41,8 @@ The two upstream shadcn form/profile regression test files are preserved under
      providers and preserves application cache handlers.
    - `src/lib/auth/localized-tabs.ts` refreshes React tab labels after upstream
      locale and BTST translations resolve; preserve native localization resolvers.
+   - Agent approval waits for hydration before reading query parameters, so a
+     valid approval URL has the same initial server and client markup.
    - `src/lib/utils.ts` uses the existing clsx/tailwind-merge primitives.
    - Package branding, ESM exports, generated plugin subpaths, Tailwind source CSS,
      and dependency placement belong to this fork.

@@ -3,9 +3,11 @@ import type { AgentAuthAdapter } from "@better-auth-ui/core/plugins/agent-auth"
 import type { BillingAdapter } from "@better-auth-ui/core/plugins/billing"
 import { useUnlinkAccount } from "@better-auth-ui/react"
 import { QueryClient } from "@tanstack/react-query"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { createAuthClient } from "better-auth/react"
 import type { ReactNode } from "react"
+import { hydrateRoot } from "react-dom/client"
+import { renderToString } from "react-dom/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { Admin } from "../../components/auth/admin/admin"
 import { AgentApproval } from "../../components/auth/agent-auth/agent-approval"
@@ -303,4 +305,38 @@ describe("packaged upstream behavior with native Better Auth requests", () => {
             )
         )
     })
+})
+
+it("hydrates agent approval URLs without changing the initial server markup", async () => {
+    window.history.replaceState({}, "", "/auth/agent-approval?agent_id=agent1")
+    const f = fixture({})
+    const adapter: AgentAuthAdapter = {
+        getApproval: () => new Promise(() => {}),
+        approve: async () => {},
+        deny: async () => {},
+        listAgents: async () => [],
+        revoke: async () => {}
+    }
+    const tree = f.wrap(<AgentApproval />, [agentAuthPlugin({ adapter })])
+    const browserWindow = window
+    let html: string
+    vi.stubGlobal("window", undefined)
+    try {
+        html = renderToString(tree)
+    } finally {
+        vi.stubGlobal("window", browserWindow)
+    }
+    const container = document.createElement("div")
+    container.innerHTML = html
+    document.body.append(container)
+    const errors: unknown[] = []
+    let root!: ReturnType<typeof hydrateRoot>
+    await act(async () => {
+        root = hydrateRoot(container, tree, {
+            onRecoverableError: (error) => errors.push(error)
+        })
+    })
+    act(() => root.unmount())
+    container.remove()
+    expect(errors).toEqual([])
 })
