@@ -35,12 +35,7 @@ export const authClientPlugin = () =>
                         meta: ({ params }) =>
                             createPageMeta(runtime, "auth", params.path)
                     })
-                }),
-            sitemap: async () =>
-                ["sign-in", "sign-up", "forgot-password"].map((path) => ({
-                    url: `${runtime.site.baseURL}${runtime.site.basePath}/auth/${path}`,
-                    lastModified: new Date()
-                }))
+                })
         })
     })
 

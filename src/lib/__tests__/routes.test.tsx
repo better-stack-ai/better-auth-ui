@@ -181,3 +181,14 @@ it("binds dynamic paths to metadata on the resolved Stack router", async () => {
         content: "https://example.com/p/organization/acme/people"
     })
 })
+
+it("does not advertise unresolved browser-configured auth paths in the sitemap", async () => {
+    const stack = makeStack()
+    const config = resolveAuthConfig({
+        ...base,
+        viewPaths: { auth: { signIn: "login" } }
+    })
+    expect(getEnabledPaths(config, "auth")).toContain("login")
+    expect(getEnabledPaths(config, "auth")).not.toContain("sign-in")
+    expect(await stack.generateSitemap()).toEqual([])
+})

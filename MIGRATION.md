@@ -53,3 +53,9 @@ SSR applications should pass their request-scoped QueryClient and hydrate it.
 
 See the [upstream 1.7 migration guide](https://better-auth-ui.com/migrations/1-7)
 for detailed component and provider configuration.
+
+Auth routes no longer emit guessed sitemap entries. View paths are supplied by the
+application's browser provider, so the server-side plugin factory cannot know the
+configured URLs. Add public authentication URLs to the application's sitemap if
+needed, using the same path configuration. Private settings and administration
+pages remain excluded and carry `noindex` metadata.
