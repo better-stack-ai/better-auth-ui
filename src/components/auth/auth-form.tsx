@@ -26,6 +26,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field"
 import { Input } from "../ui/input"
 import { Spinner } from "../ui/spinner"
 import { AdditionalField, type AdditionalFieldProps } from "./additional-field"
+import { useIsHydrated } from "./use-is-hydrated"
 
 const { fieldContext, formContext, useFieldContext, useFormContext } =
     createFormHookContexts()
@@ -150,6 +151,7 @@ function AuthFormRoot({
 }: AuthFormRootProps) {
     const form = useFormContext()
     const submittingRef = useRef(false)
+    const isHydrated = useIsHydrated()
 
     async function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
@@ -169,6 +171,10 @@ function AuthFormRoot({
     return (
         <form
             {...props}
+            // Native submission must never serialize credentials into the URL.
+            method="post"
+            inert={!isHydrated || props.inert}
+            aria-busy={!isHydrated || props["aria-busy"]}
             onInvalid={(event) =>
                 focusFirstInvalidAuthFormControl(event.currentTarget)
             }

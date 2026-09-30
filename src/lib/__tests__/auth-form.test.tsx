@@ -1,6 +1,7 @@
 import type { TablePersistenceAdapters } from "@better-auth-ui/core"
 import "@testing-library/jest-dom/vitest"
 import {
+    act,
     cleanup,
     fireEvent,
     render,
@@ -8,6 +9,8 @@ import {
     waitFor,
     within
 } from "@testing-library/react"
+import { hydrateRoot } from "react-dom/client"
+import { renderToString } from "react-dom/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
     setAuthFormServerError,
@@ -269,6 +272,46 @@ function renderEmailFirstSignIn(status: number) {
 }
 
 describe("shadcn TanStack form integration", () => {
+    it("keeps server-rendered credentials inert until the submit handler hydrates", async () => {
+        const tree = <MultiFieldServerErrorForm />
+        const container = document.createElement("div")
+        container.innerHTML = renderToString(tree)
+        document.body.append(container)
+        const formElement = container.querySelector("form")!
+        const errors: unknown[] = []
+        let root: ReturnType<typeof hydrateRoot> | undefined
+
+        try {
+            expect(formElement).toHaveAttribute("inert")
+            expect(formElement).toHaveAttribute("aria-busy", "true")
+            expect(formElement.method).toBe("post")
+
+            await act(async () => {
+                root = hydrateRoot(container, tree, {
+                    onRecoverableError: (error) => errors.push(error)
+                })
+            })
+            expect(errors).toEqual([])
+            expect(formElement).not.toHaveAttribute("inert")
+            expect(formElement).not.toHaveAttribute("aria-busy")
+            const fields = within(container)
+            fireEvent.change(fields.getByLabelText("Email"), {
+                target: { value: "ada@example.com" }
+            })
+            fireEvent.change(fields.getByLabelText("Password"), {
+                target: { value: "synthetic-password" }
+            })
+            expect(fireEvent.submit(formElement)).toBe(false)
+            expect(
+                await fields.findByText("Email is unavailable")
+            ).toBeVisible()
+            expect(fields.getByText("Password is compromised")).toBeVisible()
+        } finally {
+            act(() => root?.unmount())
+            container.remove()
+        }
+    })
+
     it("shares one loading indicator across form and external pending transitions", async () => {
         let resolve!: () => void
         const promise = new Promise<void>((finish) => {

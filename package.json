@@ -1,7 +1,7 @@
 {
     "name": "@btst/better-auth-ui",
     "homepage": "https://www.better-stack.ai/",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Packaged Better Auth UI components and optional client plugins for BTST",
     "repository": {
         "type": "git",
