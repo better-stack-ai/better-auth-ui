@@ -2,11 +2,9 @@
     "defaultOpen": true,
     "pages": [
         "index",
-        "getting-started",
-        "integrations",
-        "data",
-        "components",
-        "advanced",
-        "api-reference"
+        "installation",
+        "features",
+        "migration",
+        "api"
     ]
 }

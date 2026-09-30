@@ -1,95 +1,59 @@
-# Weekly Upstream Sync
+# Syncing Better Auth UI
 
-**Goal:** Sync `better-stack-ai/better-auth-ui` (`@btst/better-auth-ui`) with upstream `better-auth-ui/better-auth-ui`, update `@btst/stack` to the latest version from the `better-stack` repo, resolve any issues, and bump our package version.
+## Pinned source
 
----
+Version 3.0.0 packages the React/shadcn source at upstream tag `v1.7.26`, commit
+`3bb3f04d033fc10c3d825776d9624b01422df98b` in
+https://github.com/better-auth-ui/better-auth-ui. `@better-auth-ui/core` and
+`@better-auth-ui/react` are exact 1.7.26 runtime dependencies. Better Auth is aligned
+to 1.7.6 across the BTST DB, Stack, and UI release cohort.
 
-## Context
+`upstream-registry.json` records the matching registry inventory. Source is from
+`examples/start-shadcn-example/src/components/auth`, `components/ui`, and `lib/auth`.
+The two upstream shadcn form/profile regression test files are preserved under
+`src/lib/__tests__`, with package-relative imports.
 
-- **Our fork:** `@btst/better-auth-ui` at `git@github.com:better-stack-ai/better-auth-ui.git`
-- **Upstream:** `https://github.com/better-auth-ui/better-auth-ui` — tracked as `upstream/main` remote (already configured)
-- **Our custom commits** add the btst plugin layer: `src/plugins/`, `src/lib/plugin-context-bridge.tsx`, `src/client.ts`, `src/components/*/pages/` wrappers, and our `package.json` branding
-- **btst/stack source** is in the `better-stack` repo under `packages/stack/` — check its `package.json` for the current version
+## Update procedure
 
----
+1. Check out a new branch from the fork's main branch. Fetch the upstream stable
+   tag and inspect its release/migration notes, React/core package manifests, and
+   registry metadata. Do not merge the upstream monorepo's unrelated examples or
+   build toolchain into this packaged companion.
+2. Update the exact upstream React/core dependency versions together. Align Better
+   Auth peers, dev dependencies, and related optional plugins with the coordinated
+   BTST DB release. Update React and Tailwind requirements from upstream.
+3. Diff the source directories above against the pinned upstream tag and import
+   the changes into the corresponding `src/` directories. Rewrite `@/` imports to
+   relative paths. Keep component entry points marked `"use client"`; leave
+   `src/client.tsx` and route factory helpers server-safe.
+4. Preserve these intentional fork changes when bringing in source:
+   - `src/client.tsx`, `src/plugins/*`, and `src/lib/plugin-context-bridge.tsx` provide
+     BTST route families, page overrides, metadata, error boundaries, shared
+     QueryClient, per-plugin sites, notifications, localization and session refresh.
+   - `src/components/auth/auth-provider.tsx` creates a provider-scoped fallback
+     QueryClient instead of upstream's module-global fallback. Preserve this SSR
+     isolation fix and stable upstream provider configuration.
+   - Component toast calls use `useAuthNotifications()` from
+     `src/lib/notifications.tsx`; the standalone default is sonner. Each React
+     component that uses a toast calls this hook once, and effects include the
+     notification method in their dependency lists.
+   - `src/lib/error-notifications.ts` deduplicates cache errors across nested
+     providers and preserves application cache handlers.
+   - `src/lib/auth/localized-tabs.ts` refreshes React tab labels after upstream
+     locale and BTST translations resolve; preserve native localization resolvers.
+   - Agent approval waits for hydration before reading query parameters, so a
+     valid approval URL has the same initial server and client markup.
+   - `src/lib/utils.ts` uses the existing clsx/tailwind-merge primitives.
+   - Package branding, ESM exports, generated plugin subpaths, Tailwind source CSS,
+     and dependency placement belong to this fork.
+5. Compare every registry item and enabled view/tab with the packaged exports and
+   `getEnabledPaths`. New families must mount through the route layer only when
+   enabled; plugin adapters and native server permissions remain application-owned.
+6. Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, plus docs typecheck
+   and build. Pack the result and test it with the coordinated Stack/DB tarballs in
+   generated consumers and the production application before stable publication.
+7. Update the migration documentation and this provenance record. Open a PR and
+   verify CI. Use the release workflow after the coordinated integration gate.
 
-## Steps
-
-1. **Fetch upstream**
-   ```bash
-   git fetch upstream/main
-   ```
-   Remote `upstream/main` is already configured.
-
-2. **Check what's new**
-   ```bash
-   git log --oneline HEAD ^upstream/main      # our commits
-   git log --oneline upstream/main ^HEAD      # upstream commits we're missing
-   ```
-   Note any new view paths, components, or types added upstream.
-
-3. **Merge upstream**
-   ```bash
-   git merge upstream/main
-   ```
-   The **only expected conflict** is `package.json`. Resolve it by keeping our branding (`@btst/better-auth-ui`, `version`, `homepage`, `repository`, `@btst/stack` peer dep, `@btst/yar` peer dep) while taking upstream's updated dep versions.
-
-4. **Regenerate lockfile**
-   ```bash
-   git checkout upstream/main -- pnpm-lock.yaml
-   pnpm install --no-frozen-lockfile
-   ```
-
-5. **Check for new view paths**
-   Compare `src/lib/view-paths.ts` against the previous sync. If upstream added new entries to `authViewPaths`, `accountViewPaths`, or `organizationViewPaths`, each new path needs:
-   - A new `*-page.tsx` + `*-page.internal.tsx` pair under the appropriate `src/components/*/pages/` directory (copy the pattern from any existing pair)
-   - A new route entry in the corresponding plugin (`src/plugins/auth-plugin.ts`, `account-plugin.ts`, or `organization-plugin.ts`)
-   - If it introduces a new option type (like `TeamOptions` was added in March 2026), import and expose it in the plugin overrides interface and pass it through `src/lib/plugin-context-bridge.tsx`
-
-6. **Check for new context props**
-   Diff `src/lib/auth-ui-provider.tsx` against the previous sync. Any new props added to `AuthUIProviderProps` or `AuthUIContextType` need to be wired up in `src/lib/plugin-context-bridge.tsx`.
-
-7. **Update `@btst/stack` peer dep**
-   Check the current version in the `better-stack` repo:
-   ```bash
-   cat <path-to-better-stack>/packages/stack/package.json | grep '"version"'
-   ```
-   Update the `@btst/stack` peer dep range in `package.json` to `>=<new-version>`.
-
-8. **Bump our version**
-   Increment `version` in `package.json`:
-   - **Minor bump** (e.g. `1.2.0` → `1.3.0`) for new routes or btst additions (whether alongside an upstream sync or fork-only)
-   - **Patch bump** (e.g. `1.2.0` → `1.2.1`) for a pure upstream sync with no new btst additions, or for a fork-only fix/small tweak with no new functionality
-
-9. **Build and verify**
-   ```bash
-   npx turbo build
-   ```
-   Must succeed with no errors.
-
-10. **Format**
-    ```bash
-    npx biome check --fix
-    ```
-
-11. **Commit**
-    ```bash
-    git add -A
-    git commit -m "chore: sync upstream vX.X.X + bump btst to X.X.X"
-    ```
-
----
-
-## Caveats & Pro-tips
-
-- **`pnpm-lock.yaml` always conflicts** — take upstream's version first (`git checkout upstream/main -- pnpm-lock.yaml`), then regenerate with `pnpm install --no-frozen-lockfile`.
-
-- **Our plugin files never conflict with upstream** — `src/plugins/`, `src/components/*/pages/`, `src/lib/plugin-context-bridge.tsx`, and `src/client.ts` don't exist in upstream, so git will never touch them during a merge.
-
-- **New view paths are the main thing to watch for** — every new entry in `view-paths.ts` represents a page users can navigate to. If you don't expose it as a btst route, it's silently inaccessible in btst apps. Always diff `src/lib/view-paths.ts` carefully.
-
-- **New localization keys are safe to ignore** — they come in automatically via the merge and the bridge already passes `localization` through.
-
-- **The `biome` `any` warnings in `plugin-context-bridge.tsx` are pre-existing and intentional** — don't spend time fixing them.
-
-- **Work on a branch, not `main` directly** — use `chore/sync-upstream-<date>`, verify the build, then PR to `main`.
+The obsolete v2 flat-provider/standalone-hook architecture is intentionally removed;
+do not reintroduce compatibility wrappers around replaced upstream behavior.

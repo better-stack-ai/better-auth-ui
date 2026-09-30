@@ -1,0 +1,57 @@
+---
+title: Optional feature families
+description: Configure upstream UI plugins without duplicating backend ownership.
+---
+
+Import factories from `@btst/better-auth-ui/plugins/<name>` and add their results to
+`overrides.auth.plugins`. The package root also exports them. These are the shadcn
+factories; core factories alone do not contribute the packaged UI components.
+
+| Subpath | Factory | Surfaces |
+| --- | --- | --- |
+| `admin` | `adminPlugin` | User management, sessions, impersonation |
+| `billing` | `billingPlugin` | Personal and organization plans, checkout, subscriptions |
+| `dash` | `dashPlugin` | Personal, organization, admin and user audit activity |
+| `sso` | `ssoPlugin` | Email-first sign-in and organization SSO provider management |
+| `oauth-provider` | `oauthProviderPlugin` | Consent, OAuth sign-up/account selection, authorized apps, client management |
+| `device-authorization` | `deviceAuthorizationPlugin` | Device code approval and denial |
+| `phone-number` | `phoneNumberPlugin` | Phone sign-in, verification, account changes, password reset |
+| `siwe` | `siwePlugin` | Ethereum sign-in and wallet management |
+| `agent-auth` | `agentAuthPlugin` | Agent capability approval and revocation |
+| `organization` | `organizationPlugin` | Invitations, organizations, members, teams and dynamic roles |
+| `api-key` | `apiKeyPlugin` | Personal and organization API keys |
+| `email-otp` | `emailOtpPlugin` | Email codes, verification, password reset and email changes |
+| `magic-link` | `magicLinkPlugin` | Passwordless sign-in |
+| `two-factor` | `twoFactorPlugin` | TOTP/OTP, recovery codes and enrollment |
+| `passkey` | `passkeyPlugin` | Passkey sign-in and management |
+| `multi-session` | `multiSessionPlugin` | Account switching and device sessions |
+| `username` | `usernamePlugin` | Username sign-in and profile field |
+| `anonymous` | `anonymousPlugin` | Anonymous sign-in |
+| `delete-user` | `deleteUserPlugin` | Account deletion |
+| `last-login-method` | `lastLoginMethodPlugin` | Last-used sign-in hints |
+| `theme` | `themePlugin` | Application-owned theme controls |
+
+One-tap and captcha are also exported through `@btst/better-auth-ui/plugins/one-tap`
+and `@btst/better-auth-ui/plugins/captcha`. Captcha requires an application-provided
+widget that forwards token, expiration and reset callbacks.
+
+Billing requires a `BillingAdapter`; SIWE requires a wallet connector plus domain
+and URI; agent authentication requires an `AgentAuthAdapter`. Use upstream adapters
+or application implementations. They remain UI integration points: this package
+does not create subscriptions, SSO providers, wallets, or credentials on its own.
+Install the optional Better Auth/provider dependencies required by the features
+you enable. Missing or denied backend capabilities remain native request errors;
+this package does not grant permissions or bypass server checks.
+
+| BTST factory | Route beneath the plugin's resolved site base |
+| --- | --- |
+| `authClientPlugin()` | `/auth/:path` |
+| `accountClientPlugin()` | `/account/:path` |
+| `organizationClientPlugin()` | `/organization/:path`, `/organization/:slug/:path` |
+| `adminClientPlugin()` | `/admin/:path` |
+
+Route segments are read from provider `viewPaths` and enabled plugin views/tabs.
+Organization slug prefixes are taken from `organizationPlugin`. Unknown and
+disabled views render the not-found state before their feature components mount.
+Admin routes require both `adminClientPlugin()` and `adminPlugin()`; registering
+the route factory alone does not enable admin queries or change permissions.

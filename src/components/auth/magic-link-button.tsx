@@ -1,54 +1,70 @@
-import { LockIcon, MailIcon } from "lucide-react"
-import { useContext } from "react"
+"use client"
 
-import { AuthUIContext } from "../../lib/auth-ui-provider"
+import { type AuthView, authMutationKeys } from "@better-auth-ui/core"
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
+import { useIsMutating } from "@tanstack/react-query"
+import { Lock, Mail } from "lucide-react"
+import { magicLinkPlugin } from "../../lib/auth/magic-link-plugin"
 import { cn } from "../../lib/utils"
-import type { AuthViewPath } from "../../lib/view-paths"
-import type { AuthLocalization } from "../../localization/auth-localization"
-import { Button } from "../ui/button"
-import type { AuthViewClassNames } from "./auth-view"
+import { buttonVariants } from "../ui/button"
 
-interface MagicLinkButtonProps {
-    classNames?: AuthViewClassNames
-    isSubmitting?: boolean
-    localization: Partial<AuthLocalization>
-    view: AuthViewPath
+export type MagicLinkButtonProps = {
+    /** @remarks `AuthView` */
+    view?: AuthView
 }
 
-export function MagicLinkButton({
-    classNames,
-    isSubmitting,
-    localization,
-    view
-}: MagicLinkButtonProps) {
-    const { viewPaths, navigate, basePath, credentials } =
-        useContext(AuthUIContext)
+/**
+ * Toggle button between the password sign-in and magic-link routes.
+ *
+ * @param view - Current auth view. On `"magicLink"` this links back to password sign-in.
+ */
+export function MagicLinkButton({ view }: MagicLinkButtonProps) {
+    const { basePaths, emailAndPassword, viewPaths, localization, Link } =
+        useAuth()
+
+    const signInMutating = useIsMutating({
+        mutationKey: authMutationKeys.signIn.all
+    })
+    const signUpMutating = useIsMutating({
+        mutationKey: authMutationKeys.signUp.all
+    })
+    const isPending = signInMutating + signUpMutating > 0
+
+    const {
+        localization: magicLinkLocalization,
+        viewPaths: magicLinkViewPaths
+    } = useAuthPlugin(magicLinkPlugin)
+
+    const isMagicLinkView = view === "magicLink"
+
+    // On the magic-link view this button switches back to password sign-in.
+    // With password auth disabled there's nowhere to switch to, so hide it.
+    // (Other views — e.g. a phone-number plugin's surface — still get a
+    // "Continue with Magic Link" link.)
+    if (isMagicLinkView && !emailAndPassword?.enabled) return null
 
     return (
-        <Button
+        <Link
+            href={`${basePaths.auth}/${isMagicLinkView ? viewPaths.auth.signIn : magicLinkViewPaths.auth.magicLink}`}
+            aria-disabled={isPending || undefined}
+            tabIndex={isPending ? -1 : undefined}
+            onClick={(event) => {
+                if (isPending) event.preventDefault()
+            }}
             className={cn(
+                buttonVariants({ variant: "outline" }),
                 "w-full",
-                classNames?.form?.button,
-                classNames?.form?.secondaryButton
+                isPending && "pointer-events-none opacity-50"
             )}
-            disabled={isSubmitting}
-            type="button"
-            variant="secondary"
-            onClick={() =>
-                navigate(
-                    `${basePath}/${view === "MAGIC_LINK" || !credentials ? viewPaths.SIGN_IN : viewPaths.MAGIC_LINK}${window.location.search}`
-                )
-            }
         >
-            {view === "MAGIC_LINK" ? (
-                <LockIcon className={classNames?.form?.icon} />
-            ) : (
-                <MailIcon className={classNames?.form?.icon} />
+            {isMagicLinkView ? <Lock /> : <Mail />}
+
+            {localization.auth.continueWith.replace(
+                "{{provider}}",
+                isMagicLinkView
+                    ? localization.auth.password
+                    : magicLinkLocalization.magicLink
             )}
-            {localization.SIGN_IN_WITH}{" "}
-            {view === "MAGIC_LINK"
-                ? localization.PASSWORD
-                : localization.MAGIC_LINK}
-        </Button>
+        </Link>
     )
 }

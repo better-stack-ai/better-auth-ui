@@ -1,0 +1,108 @@
+"use client"
+
+import type {
+    ApiKeyAuthClient,
+    ListedApiKey
+} from "@better-auth-ui/core/plugins/api-key"
+import { useAuth, useAuthPlugin } from "@better-auth-ui/react"
+import { useDeleteApiKey } from "@better-auth-ui/react/plugins/api-key"
+import { Key } from "lucide-react"
+import { apiKeyPlugin } from "../../../lib/auth/api-key-plugin"
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia,
+    AlertDialogTitle
+} from "../../ui/alert-dialog"
+import { Button } from "../../ui/button"
+import { Field, FieldLabel } from "../../ui/field"
+import { Input } from "../../ui/input"
+import { Spinner } from "../../ui/spinner"
+
+export type DeleteApiKeyDialogProps = {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    apiKey: ListedApiKey
+    /** Scope the delete payload to an organization (sets `configId`). */
+    organizationId?: string
+}
+
+export function DeleteApiKeyDialog({
+    open,
+    onOpenChange,
+    apiKey,
+    organizationId
+}: DeleteApiKeyDialogProps) {
+    const { authClient, localization } = useAuth<ApiKeyAuthClient>()
+    const { localization: apiKeyLocalization } = useAuthPlugin(apiKeyPlugin)
+    const preview = `${apiKey.start}${"*".repeat(16)}`
+    const previewId = `delete-api-key-preview-${apiKey.id}`
+    const { mutate: deleteApiKey, isPending: isDeleting } = useDeleteApiKey(
+        authClient,
+        {
+            onSuccess: () => onOpenChange(false)
+        }
+    )
+
+    return (
+        <AlertDialog open={open} onOpenChange={onOpenChange}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogMedia>
+                        <Key />
+                    </AlertDialogMedia>
+
+                    <AlertDialogTitle>
+                        {apiKeyLocalization.deleteApiKey}
+                    </AlertDialogTitle>
+
+                    <AlertDialogDescription>
+                        {apiKeyLocalization.deleteApiKeyWarning}
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <Field>
+                    <FieldLabel htmlFor={previewId}>
+                        {apiKey.name || apiKeyLocalization.apiKey}
+                    </FieldLabel>
+
+                    <Input
+                        id={previewId}
+                        value={preview}
+                        readOnly
+                        className="font-mono text-xs"
+                        disabled
+                    />
+                </Field>
+
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>
+                        {localization.settings.cancel}
+                    </AlertDialogCancel>
+
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={isDeleting}
+                        onClick={() =>
+                            deleteApiKey({
+                                keyId: apiKey.id,
+                                ...(organizationId
+                                    ? { configId: "organization" }
+                                    : {})
+                            })
+                        }
+                    >
+                        {isDeleting && <Spinner />}
+
+                        {apiKeyLocalization.deleteApiKey}
+                    </Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    )
+}
