@@ -1,311 +1,351 @@
 "use client"
 
-import { useContext, useEffect } from "react"
+import {
+    type AdditionalField as AdditionalFieldConfig,
+    type AdditionalFieldFormValue,
+    DEFAULT_ADDITIONAL_FIELD_VALIDATION_DEBOUNCE_MS,
+    getFormFieldErrors,
+    normalizeAuthFormServerError,
+    validateAdditionalFieldRequired,
+    validateAdditionalFieldValue
+} from "@better-auth-ui/core"
+import {
+    type AnyFormApi,
+    createFormHook,
+    createFormHookContexts
+} from "@tanstack/react-form"
+import {
+    type ComponentProps,
+    type FormEvent,
+    type ReactNode,
+    useRef
+} from "react"
 
-import { AuthUIContext } from "../../lib/auth-ui-provider"
-import { getViewByPath } from "../../lib/utils"
-import type { AuthViewPath } from "../../lib/view-paths"
-import type { AuthLocalization } from "../../localization/auth-localization"
-import { AuthCallback } from "./auth-callback"
-import { EmailOTPForm } from "./forms/email-otp-form"
-import { EmailVerificationForm } from "./forms/email-verification-form"
-import { ForgotPasswordForm } from "./forms/forgot-password-form"
-import { MagicLinkForm } from "./forms/magic-link-form"
-import { RecoverAccountForm } from "./forms/recover-account-form"
-import { ResetPasswordForm } from "./forms/reset-password-form"
-import { SignInForm } from "./forms/sign-in-form"
-import { SignUpForm } from "./forms/sign-up-form"
-import { TwoFactorForm } from "./forms/two-factor-form"
-import { SignOut } from "./sign-out"
+import { Button } from "../ui/button"
+import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field"
+import { Input } from "../ui/input"
+import { Spinner } from "../ui/spinner"
+import { AdditionalField, type AdditionalFieldProps } from "./additional-field"
 
-export type AuthFormClassNames = {
-    base?: string
-    button?: string
-    checkbox?: string
-    description?: string
-    error?: string
-    forgotPasswordLink?: string
-    icon?: string
-    input?: string
-    label?: string
-    otpInput?: string
-    otpInputContainer?: string
-    outlineButton?: string
-    primaryButton?: string
-    providerButton?: string
-    qrCode?: string
-    secondaryButton?: string
+const { fieldContext, formContext, useFieldContext, useFormContext } =
+    createFormHookContexts()
+
+const DEFAULT_AUTH_FORM_SERVER_ERROR = "Unable to submit this form. Try again."
+
+export function focusFirstInvalidAuthFormControl(form: HTMLFormElement) {
+    requestAnimationFrame(() => {
+        form.querySelector<HTMLElement>(
+            '[aria-invalid="true"]:not([disabled]), :invalid:not([disabled])'
+        )?.focus()
+    })
 }
 
-export interface AuthFormProps {
-    className?: string
-    classNames?: AuthFormClassNames
-    callbackURL?: string
-    isSubmitting?: boolean
-    localization?: Partial<AuthLocalization>
-    pathname?: string
-    redirectTo?: string
-    view?: AuthViewPath
-    otpSeparators?: 0 | 1 | 2
-    setIsSubmitting?: (isSubmitting: boolean) => void
+function AuthFormFieldError() {
+    const field = useFieldContext<unknown>()
+    const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+
+    if (!isInvalid) return null
+
+    const errors = getFormFieldErrors(field.state.meta.errors)
+
+    return errors.length > 0 ? <FieldError errors={errors} /> : null
 }
 
-/**
- * Render the appropriate authentication UI view based on component props and AuthUIContext feature flags.
- *
- * The component chooses a view from (in priority): the `view` prop, a view resolved from `pathname`, or `"SIGN_IN"`, then validates that the view is allowed given enabled features and credentials before rendering the corresponding form component.
- *
- * @param className - Optional base CSS class applied to rendered form components
- * @param classNames - Optional object of per-element CSS class overrides for rendered form components
- * @param callbackURL - Optional URL used by flows that require a callback (magic link, email OTP)
- * @param isSubmitting - Whether a form submission is currently in progress
- * @param localization - Optional localization strings that override context-provided localization
- * @param pathname - Optional path to resolve the active auth view when `view` is not provided
- * @param redirectTo - Optional URL to redirect to after successful authentication
- * @param view - Optional explicit view to render; takes precedence over `pathname`
- * @param otpSeparators - Number of visual separators to render between OTP input groups
- * @param setIsSubmitting - Setter to update the submitting state
- * @returns The React element for the selected authentication view, or `null` if no suitable view is available.
- */
-export function AuthForm({
-    className,
-    classNames,
-    callbackURL,
-    isSubmitting,
-    localization,
-    pathname,
-    redirectTo,
-    view,
-    otpSeparators = 0,
-    setIsSubmitting
-}: AuthFormProps) {
-    const {
-        basePath,
-        credentials,
-        localization: contextLocalization,
-        magicLink,
-        emailOTP,
-        signUp,
-        twoFactor: twoFactorEnabled,
-        viewPaths,
-        replace
-    } = useContext(AuthUIContext)
+function AuthFormServerError() {
+    const form = useFormContext()
 
-    const signUpEnabled = !!signUp
+    return (
+        <form.Subscribe selector={(state) => state.errorMap.onServer}>
+            {(error) => {
+                const formError =
+                    error && typeof error === "object" && "form" in error
+                        ? error.form
+                        : error
+                const errors = getFormFieldErrors(formError ? [formError] : [])
+                return errors.length > 0 ? <FieldError errors={errors} /> : null
+            }}
+        </form.Subscribe>
+    )
+}
 
-    localization = { ...contextLocalization, ...localization }
-
-    useEffect(() => {
-        if (pathname && !getViewByPath(viewPaths, pathname)) {
-            console.error(`Invalid auth view: ${pathname}`)
-            replace(`${basePath}/${viewPaths.SIGN_IN}${window.location.search}`)
+export function setAuthFormServerError(
+    form: AnyFormApi,
+    error: unknown,
+    fallbackMessage: string
+) {
+    const normalized = normalizeAuthFormServerError(error, fallbackMessage)
+    form.setErrorMap({
+        onServer: {
+            fields: normalized.fields ?? {},
+            form: normalized.form
         }
-    }, [pathname, viewPaths, basePath, replace])
+    })
+}
 
-    view =
-        view ||
-        (getViewByPath(viewPaths, pathname) as AuthViewPath) ||
-        "SIGN_IN"
+export function clearAuthFormServerError(form: AnyFormApi) {
+    form.setErrorMap({ onServer: { fields: {} } })
+}
 
-    // Redirect to appropriate view based on enabled features
-    useEffect(() => {
-        let isInvalidView = false
+export function clearAuthFormFieldServerError(
+    form: AnyFormApi,
+    fieldName: string
+) {
+    form.setErrorMap({ onServer: undefined })
+    if (!fieldName) return
 
-        if (
-            view === "MAGIC_LINK" &&
-            (!magicLink || (!credentials && !emailOTP))
-        ) {
-            isInvalidView = true
+    const fieldMeta = form.getFieldMeta(fieldName as never)
+    if (!fieldMeta?.errorMap.onServer) return
+
+    form.setFieldMeta(fieldName as never, (current = fieldMeta) => ({
+        ...current,
+        errorMap: { ...current.errorMap, onServer: undefined },
+        errorSourceMap: { ...current.errorSourceMap, onServer: undefined }
+    }))
+}
+
+export async function runAuthFormAction(
+    form: AnyFormApi,
+    action: () => Promise<unknown>,
+    serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR
+) {
+    clearAuthFormServerError(form)
+    try {
+        await action()
+        return true
+    } catch (error) {
+        if (!form.state.errorMap.onServer) {
+            setAuthFormServerError(form, error, serverErrorMessage)
         }
+        return false
+    }
+}
 
-        if (
-            view === "EMAIL_OTP" &&
-            (!emailOTP || (!credentials && !magicLink))
-        ) {
-            isInvalidView = true
+export async function submitAuthForm(
+    form: AnyFormApi,
+    serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR
+) {
+    clearAuthFormServerError(form)
+    try {
+        await form.handleSubmit()
+        return form.state.isValid
+    } catch (error) {
+        if (!form.state.errorMap.onServer) {
+            setAuthFormServerError(form, error, serverErrorMessage)
         }
+        return false
+    }
+}
 
-        if (view === "SIGN_UP" && !signUpEnabled) {
-            isInvalidView = true
+type AuthFormRootProps = Omit<ComponentProps<"form">, "onSubmit"> & {
+    onBeforeSubmit?: () => void
+    serverErrorMessage?: string
+}
+
+function AuthFormRoot({
+    children,
+    onBeforeSubmit,
+    onInput,
+    serverErrorMessage = DEFAULT_AUTH_FORM_SERVER_ERROR,
+    ...props
+}: AuthFormRootProps) {
+    const form = useFormContext()
+    const submittingRef = useRef(false)
+
+    async function submit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault()
+        if (submittingRef.current || form.state.isSubmitting) return
+
+        const formElement = event.currentTarget
+        onBeforeSubmit?.()
+        submittingRef.current = true
+        try {
+            const isValid = await submitAuthForm(form, serverErrorMessage)
+            if (!isValid) focusFirstInvalidAuthFormControl(formElement)
+        } finally {
+            submittingRef.current = false
         }
-
-        if (
-            !credentials &&
-            [
-                "SIGN_UP",
-                "FORGOT_PASSWORD",
-                "RESET_PASSWORD",
-                "TWO_FACTOR",
-                "RECOVER_ACCOUNT"
-            ].includes(view)
-        ) {
-            isInvalidView = true
-        }
-
-        if (
-            ["TWO_FACTOR", "RECOVER_ACCOUNT"].includes(view) &&
-            !twoFactorEnabled
-        ) {
-            isInvalidView = true
-        }
-
-        if (isInvalidView) {
-            replace(`${basePath}/${viewPaths.SIGN_IN}${window.location.search}`)
-        }
-    }, [
-        basePath,
-        view,
-        viewPaths,
-        credentials,
-        replace,
-        emailOTP,
-        signUpEnabled,
-        magicLink,
-        twoFactorEnabled
-    ])
-
-    if (view === "SIGN_OUT") return <SignOut redirectTo={redirectTo} />
-    if (view === "CALLBACK") return <AuthCallback redirectTo={redirectTo} />
-
-    if (view === "SIGN_IN") {
-        return credentials ? (
-            <SignInForm
-                className={className}
-                classNames={classNames}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-                callbackURL={callbackURL}
-            />
-        ) : magicLink ? (
-            <MagicLinkForm
-                className={className}
-                classNames={classNames}
-                callbackURL={callbackURL}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        ) : emailOTP ? (
-            <EmailOTPForm
-                className={className}
-                classNames={classNames}
-                callbackURL={callbackURL}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        ) : null
     }
 
-    if (view === "TWO_FACTOR") {
-        return (
-            <TwoFactorForm
-                className={className}
-                classNames={classNames}
-                localization={localization}
-                otpSeparators={otpSeparators}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        )
-    }
+    return (
+        <form
+            {...props}
+            onInvalid={(event) =>
+                focusFirstInvalidAuthFormControl(event.currentTarget)
+            }
+            onInput={(event) => {
+                const target = event.target
+                const fieldName =
+                    target instanceof HTMLInputElement ||
+                    target instanceof HTMLSelectElement ||
+                    target instanceof HTMLTextAreaElement
+                        ? target.name
+                        : ""
+                clearAuthFormFieldServerError(form, fieldName)
+                onInput?.(event)
+            }}
+            onSubmit={submit}
+        >
+            {children}
+        </form>
+    )
+}
 
-    if (view === "RECOVER_ACCOUNT") {
-        return (
-            <RecoverAccountForm
-                className={className}
-                classNames={classNames}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        )
-    }
+type AuthFormTextFieldProps = Omit<
+    ComponentProps<typeof Input>,
+    "name" | "onBlur" | "onChange" | "value"
+> & {
+    description?: ReactNode
+    label: ReactNode
+}
 
-    if (view === "MAGIC_LINK") {
-        return (
-            <MagicLinkForm
-                className={className}
-                classNames={classNames}
-                callbackURL={callbackURL}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        )
-    }
+function AuthFormTextField({
+    description,
+    id,
+    label,
+    ...props
+}: AuthFormTextFieldProps) {
+    const field = useFieldContext<string>()
+    const form = useFormContext()
+    const isInvalid = isAuthFormFieldInvalid(field.state.meta)
+    const inputId = id ?? field.name
 
-    if (view === "EMAIL_OTP") {
-        return (
-            <EmailOTPForm
-                className={className}
-                classNames={classNames}
-                callbackURL={callbackURL}
-                localization={localization}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
+    return (
+        <Field data-invalid={isInvalid}>
+            <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+            <Input
+                {...props}
+                aria-busy={field.state.meta.isValidating || undefined}
+                aria-invalid={isInvalid}
+                id={inputId}
+                name={field.name}
+                onBlur={field.handleBlur}
+                onChange={(event) => {
+                    clearAuthFormFieldServerError(form, field.name)
+                    field.handleChange(event.target.value)
+                }}
+                value={field.state.value}
             />
-        )
-    }
+            {description ? (
+                <FieldDescription>{description}</FieldDescription>
+            ) : null}
+            <AuthFormFieldError />
+        </Field>
+    )
+}
 
-    if (view === "EMAIL_VERIFICATION") {
-        return (
-            <EmailVerificationForm
-                className={className}
-                classNames={classNames}
-                callbackURL={callbackURL}
-                localization={localization}
-                otpSeparators={otpSeparators}
-                redirectTo={redirectTo}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        )
-    }
+function AuthFormSubmitButton({
+    children,
+    disabled,
+    isPending,
+    ...props
+}: ComponentProps<typeof Button> & { isPending?: boolean }) {
+    const form = useFormContext()
 
-    if (view === "FORGOT_PASSWORD") {
-        return (
-            <ForgotPasswordForm
-                className={className}
-                classNames={classNames}
-                localization={localization}
-                isSubmitting={isSubmitting}
-                setIsSubmitting={setIsSubmitting}
-            />
-        )
-    }
+    return (
+        <form.Subscribe
+            selector={(state) =>
+                [state.isSubmitting, state.isValidating] as const
+            }
+        >
+            {([isSubmitting, isValidating]) => (
+                <Button
+                    {...props}
+                    aria-busy={isPending || isSubmitting || undefined}
+                    aria-disabled={
+                        disabled ||
+                        isPending ||
+                        isSubmitting ||
+                        isValidating ||
+                        undefined
+                    }
+                    disabled={
+                        disabled || isPending || isSubmitting || isValidating
+                    }
+                    type="submit"
+                >
+                    {isPending || isSubmitting ? (
+                        <Spinner data-icon="inline-start" />
+                    ) : null}
+                    {children}
+                </Button>
+            )}
+        </form.Subscribe>
+    )
+}
 
-    if (view === "RESET_PASSWORD") {
-        return (
-            <ResetPasswordForm
-                className={className}
-                classNames={classNames}
-                localization={localization}
-            />
-        )
-    }
+type AuthFormAdditionalFieldProps = Omit<
+    AdditionalFieldProps,
+    "errors" | "isInvalid" | "name" | "onBlur" | "onChange" | "value"
+>
 
-    if (view === "SIGN_UP") {
-        return (
-            signUpEnabled && (
-                <SignUpForm
-                    className={className}
-                    classNames={classNames}
-                    callbackURL={callbackURL}
-                    localization={localization}
-                    redirectTo={redirectTo}
-                    isSubmitting={isSubmitting}
-                    setIsSubmitting={setIsSubmitting}
-                />
-            )
-        )
+function AuthFormAdditionalField(props: AuthFormAdditionalFieldProps) {
+    const field = useFieldContext<AdditionalFieldFormValue>()
+    const form = useFormContext()
+    const isInvalid = isAuthFormFieldInvalid(field.state.meta)
+
+    return (
+        <AdditionalField
+            {...props}
+            errors={
+                isInvalid
+                    ? getFormFieldErrors(field.state.meta.errors)
+                    : undefined
+            }
+            isInvalid={isInvalid}
+            name={field.name}
+            onBlur={field.handleBlur}
+            onChange={(value) => {
+                clearAuthFormFieldServerError(form, field.name)
+                field.handleChange(value)
+            }}
+            value={field.state.value}
+        />
+    )
+}
+
+export const {
+    useAppForm: useAuthForm,
+    withFieldGroup: withAuthFieldGroup,
+    withForm: withAuthForm
+} = createFormHook({
+    fieldComponents: {
+        AuthFormAdditionalField,
+        AuthFormFieldError,
+        AuthFormTextField
+    },
+    fieldContext,
+    formComponents: {
+        AuthFormRoot,
+        AuthFormServerError,
+        AuthFormSubmitButton
+    },
+    formContext
+})
+
+export function isAuthFormFieldInvalid({
+    isTouched,
+    isValid
+}: {
+    isTouched: boolean
+    isValid: boolean
+}) {
+    return isTouched && !isValid
+}
+
+export function getAuthAdditionalFieldValidators(
+    field: AdditionalFieldConfig,
+    requiredMessage: string
+) {
+    return {
+        onChange: ({ value }: { value: AdditionalFieldFormValue }) =>
+            validateAdditionalFieldRequired(field, value, requiredMessage),
+        onChangeAsync: field.validate
+            ? ({ value }: { value: AdditionalFieldFormValue }) =>
+                  validateAdditionalFieldValue(field, value)
+            : undefined,
+        onChangeAsyncDebounceMs: field.validate
+            ? (field.validateDebounceMs ??
+              DEFAULT_ADDITIONAL_FIELD_VALIDATION_DEBOUNCE_MS)
+            : undefined
     }
 }

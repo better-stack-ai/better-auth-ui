@@ -1,140 +1,124 @@
-import type { SocialProvider } from "better-auth/social-providers"
-import { useCallback, useContext } from "react"
+"use client"
 
-import { AuthUIContext } from "../../lib/auth-ui-provider"
-import type { Provider } from "../../lib/social-providers"
-import { cn, getLocalizedError, getSearchParam } from "../../lib/utils"
-import type { AuthLocalization } from "../../localization/auth-localization"
+import {
+    type AuthSocialProvider,
+    type AuthView,
+    authMutationKeys,
+    getProviderId,
+    getProviderName,
+    type OAuthPopupAuthClient
+} from "@better-auth-ui/core"
+import {
+    renderProviderIcon,
+    useAuth,
+    useFetchOptions,
+    useSignInOAuthPopup,
+    useSignInSocial
+} from "@better-auth-ui/react"
+import { useIsMutating } from "@tanstack/react-query"
+import type { ComponentProps } from "react"
+import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
-import type { AuthViewClassNames } from "./auth-view"
+import { Spinner } from "../ui/spinner"
+import { LastUsedBadge } from "./last-login-method/last-used-badge"
 
-interface ProviderButtonProps {
-    className?: string
-    classNames?: AuthViewClassNames
-    callbackURL?: string
-    isSubmitting: boolean
-    localization: Partial<AuthLocalization>
-    other?: boolean
-    provider: Provider
-    redirectTo?: string
-    socialLayout: "auto" | "horizontal" | "grid" | "vertical"
-    setIsSubmitting: (isSubmitting: boolean) => void
-}
+export type ProviderButtonProps = {
+    provider: AuthSocialProvider
+    display?: "full" | "name" | "icon"
+    view?: AuthView
+} & Omit<ComponentProps<typeof Button>, "onClick" | "children" | "disabled">
 
+/**
+ * Social provider sign-in button.
+ *
+ * @param provider - Provider to sign in with.
+ * @param display - `"full"` (e.g. "Continue with Google"), `"name"` (just the provider name), or `"icon"` (icon only).
+ */
 export function ProviderButton({
-    className,
-    classNames,
-    callbackURL: callbackURLProp,
-    isSubmitting,
-    localization,
-    other,
     provider,
-    redirectTo: redirectToProp,
-    socialLayout,
-    setIsSubmitting
+    display = "full",
+    view = "signIn",
+    variant = "outline",
+    className,
+    ...props
 }: ProviderButtonProps) {
     const {
         authClient,
-        basePath,
         baseURL,
-        persistClient,
-        redirectTo: contextRedirectTo,
-        viewPaths,
-        social,
-        genericOAuth,
-        toast,
-        localizeErrors
-    } = useContext(AuthUIContext)
+        localization,
+        navigate,
+        redirectTo,
+        socialSignInMode
+    } = useAuth()
 
-    const getRedirectTo = useCallback(
-        () =>
-            redirectToProp || getSearchParam("redirectTo") || contextRedirectTo,
-        [redirectToProp, contextRedirectTo]
-    )
+    const callbackURL = `${baseURL}${redirectTo}`
+    const { fetchOptions, resetFetchOptions } = useFetchOptions()
 
-    const getCallbackURL = useCallback(
-        () =>
-            `${baseURL}${
-                callbackURLProp ||
-                (persistClient
-                    ? `${basePath}/${viewPaths.CALLBACK}?redirectTo=${encodeURIComponent(getRedirectTo())}`
-                    : getRedirectTo())
-            }`,
-        [
-            callbackURLProp,
-            persistClient,
-            basePath,
-            viewPaths,
-            baseURL,
-            getRedirectTo
-        ]
-    )
+    const { mutate: signInSocial, isPending: signInSocialPending } =
+        useSignInSocial(authClient, { onError: resetFetchOptions })
+    const { mutate: signInPopup, isPending: signInPopupPending } =
+        useSignInOAuthPopup(authClient as OAuthPopupAuthClient, {
+            onError: resetFetchOptions
+        })
 
-    const doSignInSocial = async () => {
-        setIsSubmitting(true)
+    const providerId = getProviderId(provider)
+    const providerIcon = renderProviderIcon(provider)
 
-        try {
-            const socialParams = {
-                provider: provider.provider as SocialProvider,
-                callbackURL: getCallbackURL(),
-                fetchOptions: { throw: true }
-            }
+    const signInMutating = useIsMutating({
+        mutationKey: authMutationKeys.signIn.all
+    })
+    const signUpMutating = useIsMutating({
+        mutationKey: authMutationKeys.signUp.all
+    })
+    const isPending = signInMutating + signUpMutating > 0
 
-            if (other) {
-                if (genericOAuth?.signIn) {
-                    await genericOAuth.signIn(socialParams)
-
-                    setTimeout(() => {
-                        setIsSubmitting(false)
-                    }, 10000)
-                } else {
-                    await authClient.signIn.social(socialParams)
-                }
-            } else {
-                if (social?.signIn) {
-                    await social.signIn(socialParams)
-
-                    setTimeout(() => {
-                        setIsSubmitting(false)
-                    }, 10000)
-                } else {
-                    await authClient.signIn.social(socialParams)
-                }
-            }
-        } catch (error) {
-            toast({
-                variant: "error",
-                message: getLocalizedError({
-                    error,
-                    localization,
-                    localizeErrors
-                })
-            })
-
-            setIsSubmitting(false)
+    const handleSignIn = () => {
+        if (socialSignInMode === "popup") {
+            signInPopup(
+                {
+                    provider: providerId,
+                    callbackURL,
+                    requestSignUp: view === "signUp"
+                },
+                { onSuccess: () => navigate({ to: redirectTo }) }
+            )
+            return
         }
+
+        signInSocial({ provider: providerId, callbackURL, fetchOptions })
     }
 
     return (
         <Button
-            className={cn(
-                socialLayout === "vertical" ? "w-full" : "grow",
-                className,
-                classNames?.form?.button,
-                classNames?.form?.outlineButton,
-                classNames?.form?.providerButton
-            )}
-            disabled={isSubmitting}
-            variant="outline"
-            onClick={doSignInSocial}
+            type="button"
+            variant={variant}
+            disabled={isPending}
+            onClick={handleSignIn}
+            className={cn("relative overflow-visible", className)}
+            {...props}
         >
-            {provider.icon && (
-                <provider.icon className={classNames?.form?.icon} />
+            {signInSocialPending || signInPopupPending ? (
+                <Spinner />
+            ) : (
+                providerIcon
             )}
 
-            {socialLayout === "grid" && provider.name}
-            {socialLayout === "vertical" &&
-                `${localization.SIGN_IN_WITH} ${provider.name}`}
+            {display === "full"
+                ? localization.auth.continueWith.replace(
+                      "{{provider}}",
+                      getProviderName(provider)
+                  )
+                : display === "name"
+                  ? getProviderName(provider)
+                  : null}
+
+            {display === "icon" && (
+                <span className="sr-only">{getProviderName(provider)}</span>
+            )}
+
+            {view !== "signUp" && (
+                <LastUsedBadge method={providerId} floating />
+            )}
         </Button>
     )
 }

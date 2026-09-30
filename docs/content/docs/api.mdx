@@ -1,0 +1,41 @@
+---
+title: API reference
+description: Public package entry points and BTST-specific customization.
+---
+
+- `@btst/better-auth-ui`: packaged auth, account, organization, admin, billing,
+  audit, SSO, OAuth, device, wallet, phone and agent components; upstream React
+  hooks; `AuthProvider`; `BetterAuthPluginProvider`; shadcn plugin factories.
+- `@btst/better-auth-ui/client`: server-safe BTST route factories and their override types.
+- `@btst/better-auth-ui/plugins/<name>`: individual shadcn plugin factories.
+- `@btst/better-auth-ui/server`: upstream server helpers and named email templates.
+  Install the optional `react-email` peer when importing the email templates.
+- `@btst/better-auth-ui/css`: Tailwind 4 source registration.
+
+`AuthPluginOverrides` exposes the upstream provider options except framework
+navigation, Link, QueryClient, and basePaths, which come from Stack. It additionally
+supports `onSessionChange`, `onRouteError`, and path-keyed `pageProps`.
+`AccountPluginOverrides`, `OrganizationPluginOverrides`, and `AdminPluginOverrides`
+contain `pageProps` and `onRouteError` only.
+
+```tsx
+import { AuthProvider, Auth, UserButton } from "@btst/better-auth-ui"
+import { apiKeyPlugin } from "@btst/better-auth-ui/plugins/api-key"
+
+<AuthProvider
+  authClient={authClient}
+  queryClient={queryClient}
+  navigate={({ to, replace }) => replace ? router.replace(to) : router.push(to)}
+  Link={Link}
+  basePaths={{ auth: "/auth", settings: "/account" }}
+  plugins={[apiKeyPlugin()]}
+>
+  <Auth view="signIn" />
+  <UserButton size="icon" links={[{ label: "Dashboard", href: "/dashboard" }]} />
+</AuthProvider>
+```
+
+This fork pins upstream core/react to 1.7.26 and packages the matching shadcn
+sources. Public upstream types are available from `@better-auth-ui/core` and its
+plugin subpaths. Core query helpers preserve Better Auth ownership of sessions,
+account mutations, and organization/admin permission decisions.

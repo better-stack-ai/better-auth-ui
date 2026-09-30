@@ -1,0 +1,78 @@
+---
+title: Installation
+description: Register Better Auth UI routes in a BTST 4 application.
+---
+
+Use Node 22 or newer, React/React DOM 19.2.6 or newer, Tailwind 4.3.2 or newer,
+TanStack Query 5.101.2 or newer, and Better Auth 1.7.6. Install the matching
+`@better-auth/api-key` and `@better-auth/passkey` 1.7.6 peers.
+
+```sh
+pnpm add @btst/better-auth-ui@3 @btst/stack@4 @btst/yar@^1.3.2 better-auth@1.7.6 @better-auth/api-key@1.7.6 @better-auth/passkey@1.7.6 @tanstack/react-query@^5.101.2 @tanstack/query-core@^5.101.2
+```
+
+Import the package's Tailwind source registration after your Tailwind import:
+
+```css
+@import "tailwindcss";
+@import "@btst/better-auth-ui/css";
+```
+
+Keep BTST's usual shadcn theme variables. Components and primitive dependencies
+ship with the package; you do not need to copy the upstream registry into each app.
+
+The route factories are safe to call during SSR:
+
+```tsx
+import { createClientStack } from "@btst/stack/client"
+import { authClientPlugin, accountClientPlugin, organizationClientPlugin, adminClientPlugin } from "@btst/better-auth-ui/client"
+
+const stack = createClientStack({
+  queryClient,
+  api: { baseURL, basePath: "/api/data" },
+  site: { baseURL, basePath: "/p" },
+  plugins: {
+    auth: authClientPlugin(),
+    account: accountClientPlugin(),
+    organization: organizationClientPlugin(),
+    admin: adminClientPlugin()
+  }
+})
+```
+
+Configure browser customization in your existing StackProvider:
+
+```tsx
+import { StackProvider } from "@btst/stack/context"
+import { organizationPlugin } from "@btst/better-auth-ui/plugins/organization"
+import { adminPlugin } from "@btst/better-auth-ui/plugins/admin"
+
+<StackProvider
+  stack={stack}
+  router={routerAdapter}
+  overrides={{ auth: {
+    authClient,
+    redirectTo: "/p/account/account",
+    socialProviders: ["github"],
+    plugins: [organizationPlugin({ teams: true }), adminPlugin()],
+    onSessionChange: () => router.refresh()
+  } }}
+>
+  {children}
+</StackProvider>
+```
+
+`authClient` is the application's native Better Auth client, configured with the
+matching Better Auth client plugins. BTST's optional identity/authorization adapter
+is independent: it is not needed by this UI and does not replace Better Auth's
+sessions or permission checks.
+
+The bridge takes navigation, links, notifications, translations, per-plugin site
+endpoints, and the request's QueryClient from StackProvider. Place
+`BetterAuthPluginProvider` around embedded components such as `UserButton` inside
+StackProvider; routed pages already provide this bridge.
+
+Same-origin pushes use the configured router. Since StackRouter has no replace
+method, replacement navigation uses `window.location.replace`. Cross-origin
+navigation always uses the browser. Upstream server helpers can prefetch sessions
+into the request's shared QueryClient; never reuse a server QueryClient across users.

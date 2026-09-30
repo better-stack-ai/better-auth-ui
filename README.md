@@ -1,53 +1,32 @@
-# Better Auth UI
+# Better Auth UI for BTST
 
-<picture>
-    <source srcset="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/better-auth-ui-promo-dark.png" media="(prefers-color-scheme: dark)">
-    <source srcset="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/better-auth-ui-promo-light.png" media="(prefers-color-scheme: light)">
-    <img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/better-auth-ui-promo-dark.png" alt="Better Auth UI Logo">
-</picture>
+`@btst/better-auth-ui` packages Better Auth UI's React/shadcn components as optional
+BTST client plugins. Version 3 tracks upstream **1.7.26**, supports **BTST 4**, and
+aligns with **Better Auth 1.7.6**, **React 19.2.6+**, and **Tailwind 4.3.2+**.
 
-## [better-auth-ui.com](https://better-auth-ui.com)
+Applications keep ownership of their native Better Auth server/client configuration,
+provider credentials, and authorization. BTST supplies routes, framework navigation,
+notifications, localization, and a shared request-scoped QueryClient.
 
-Plug & play shadcn/ui auth components for [better-auth](https://better-auth.com).
+See [installation](docs/content/docs/installation.mdx), [optional features](docs/content/docs/features.mdx),
+[API reference](docs/content/docs/api.mdx), and the [v3 migration guide](MIGRATION.md).
 
-- *Own Your Auth*
+The auth, account, organization, and admin route families support all upstream
+React/shadcn feature plugins, including billing, audit logs, SSO, OAuth client
+management and consent, device authorization, phone and wallet sign-in, and agent
+authorization. Features remain opt-in.
 
-[Demo](https://newtech.dev/auth/login) - [Documentation](https://better-auth-ui.com) - [Roadmap](https://betterauthui.featurebase.app/roadmap)
+## Development
 
-☕️ [Buy me a coffee](https://buymeacoffee.com/daveycodez)
+```sh
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm --dir docs install --frozen-lockfile
+pnpm --dir docs check-types
+pnpm --dir docs build
+```
 
----
-
-### Sign In
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/sign-in-dark.png" alt="Sign In Dark" width="384" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/sign-in-light.png" alt="Sign In Light" width="384" />
-
-### Sign Up
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/sign-up-dark.png" alt="Sign Up Dark" width="384" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/sign-up-light.png" alt="Sign Up Light" width="384" />
-
-### Forgot Password
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/forgot-password-dark.png" alt="Forgot Password Dark" width="384" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/forgot-password-light.png" alt="Forgot Password Light" width="384" />
-
-### User Button
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/user-dropdown-dark.png" alt="User Dropdown Dark" width="182" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/user-dropdown-light.png" alt="User Dropdown Light" width="182" />
-
-### Email Template
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/email-template-dark.png" alt="Email Template Dark" width="384" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/email-template-light.png" alt="Email Template Light" width="384" />
-
-### Settings Cards
-
-<img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/settings-cards-dark.png" alt="Settings Cards Dark" width="384" /><img src="https://raw.githubusercontent.com/daveyplate/better-auth-ui/main/docs/public/screenshots/settings-cards-light.png" alt="Settings Cards Light" width="384" />
-
----
-
-Fully customizable!
-
-Coming Soon: API Keys, Organization, and more!
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+[SYNC-UPSTREAM.md](SYNC-UPSTREAM.md) records source provenance and the update procedure.

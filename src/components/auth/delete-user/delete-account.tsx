@@ -1,0 +1,327 @@
+"use client"
+
+import {
+    authQueryKeys,
+    isReauthenticationRequiredError,
+    validateStringLength
+} from "@better-auth-ui/core"
+import {
+    useAuth,
+    useAuthPlugin,
+    useDeleteUser,
+    useListAccounts
+} from "@better-auth-ui/react"
+import { useQueryClient } from "@tanstack/react-query"
+import { Eye, EyeOff, TriangleAlert } from "lucide-react"
+import { useState } from "react"
+import { deleteUserPlugin } from "../../../lib/auth/delete-user-plugin"
+import { useAuthNotifications } from "../../../lib/notifications"
+import { cn } from "../../../lib/utils"
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogMedia,
+    AlertDialogTitle,
+    AlertDialogTrigger
+} from "../../ui/alert-dialog"
+import { buttonVariants } from "../../ui/button"
+import { Card, CardContent } from "../../ui/card"
+import { Field, FieldLabel } from "../../ui/field"
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput
+} from "../../ui/input-group"
+import { isAuthFormFieldInvalid, useAuthForm } from "../auth-form"
+import { ReauthenticationAction } from "../reauthentication"
+
+export type DeleteAccountProps = {
+    className?: string
+}
+
+/**
+ * Danger-zone card to delete the authenticated account, with a confirmation dialog and toasts.
+ */
+export function DeleteAccount({ className }: DeleteAccountProps) {
+    const toast = useAuthNotifications()
+    const { authClient, basePaths, localization, viewPaths, navigate } =
+        useAuth()
+
+    const {
+        localization: deleteUserLocalization,
+        sendDeleteAccountVerification
+    } = useAuthPlugin(deleteUserPlugin)
+
+    const { data: accounts } = useListAccounts(authClient)
+
+    const queryClient = useQueryClient()
+
+    const [confirmOpen, setConfirmOpen] = useState(false)
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+
+    const hasCredentialAccount = accounts?.some(
+        (account) => account.providerId === "credential"
+    )
+    const needsPassword = !sendDeleteAccountVerification && hasCredentialAccount
+
+    const deleteUser = useDeleteUser(authClient, {
+        meta: { errorPresentation: "inline" }
+    })
+    const needsReauthentication = isReauthenticationRequiredError(
+        deleteUser.error
+    )
+
+    const form = useAuthForm({
+        defaultValues: { password: "" },
+        onSubmit: async ({ value }) => {
+            await deleteUser.mutateAsync(
+                needsPassword ? { password: value.password } : {},
+                {
+                    onSuccess: () => {
+                        setConfirmOpen(false)
+                        form.reset()
+
+                        if (sendDeleteAccountVerification) {
+                            toast.success(
+                                deleteUserLocalization.deleteUserVerificationSent
+                            )
+                        } else {
+                            toast.success(
+                                deleteUserLocalization.deleteUserSuccess
+                            )
+                            queryClient.removeQueries({
+                                queryKey: authQueryKeys.all
+                            })
+                            navigate({
+                                to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
+                                replace: true
+                            })
+                        }
+                    }
+                }
+            )
+        }
+    })
+
+    const handleDialogOpenChange = (open: boolean) => {
+        setConfirmOpen(open)
+        deleteUser.reset()
+        form.reset()
+        setIsPasswordVisible(false)
+    }
+
+    return (
+        <Card className={cn("border-destructive", className)}>
+            <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="font-medium text-sm leading-tight">
+                        {deleteUserLocalization.deleteAccount}
+                    </p>
+
+                    <p className="mt-0.5 text-muted-foreground text-xs">
+                        {deleteUserLocalization.deleteAccountDescription}
+                    </p>
+                </div>
+
+                <AlertDialog
+                    open={confirmOpen}
+                    onOpenChange={handleDialogOpenChange}
+                >
+                    <AlertDialogTrigger
+                        className={cn(
+                            buttonVariants({
+                                variant: "destructive",
+                                size: "sm"
+                            })
+                        )}
+                        disabled={!accounts}
+                    >
+                        {deleteUserLocalization.deleteAccount}
+                    </AlertDialogTrigger>
+
+                    <AlertDialogContent>
+                        {needsReauthentication ? (
+                            <>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                        {
+                                            localization.settings
+                                                .reauthenticationTitle
+                                        }
+                                    </AlertDialogTitle>
+                                </AlertDialogHeader>
+                                <ReauthenticationAction
+                                    className="p-0"
+                                    showTitle={false}
+                                />
+                            </>
+                        ) : (
+                            <form.AppForm>
+                                <form.AuthFormRoot className="flex flex-col gap-6">
+                                    <AlertDialogHeader>
+                                        <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+                                            <TriangleAlert />
+                                        </AlertDialogMedia>
+
+                                        <AlertDialogTitle>
+                                            {
+                                                deleteUserLocalization.deleteAccount
+                                            }
+                                        </AlertDialogTitle>
+
+                                        <AlertDialogDescription>
+                                            {
+                                                deleteUserLocalization.deleteAccountDescription
+                                            }
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+
+                                    {needsPassword && (
+                                        <form.AppField
+                                            name="password"
+                                            validators={{
+                                                onChange: ({ value }) =>
+                                                    validateStringLength(
+                                                        value,
+                                                        {
+                                                            requiredMessage:
+                                                                localization
+                                                                    .auth
+                                                                    .fieldRequired
+                                                        }
+                                                    )
+                                            }}
+                                        >
+                                            {(field) => {
+                                                const isInvalid =
+                                                    isAuthFormFieldInvalid(
+                                                        field.state.meta
+                                                    )
+                                                return (
+                                                    <Field
+                                                        data-invalid={isInvalid}
+                                                    >
+                                                        <FieldLabel htmlFor="delete-password">
+                                                            {
+                                                                localization
+                                                                    .auth
+                                                                    .password
+                                                            }
+                                                        </FieldLabel>
+
+                                                        <InputGroup>
+                                                            <InputGroupInput
+                                                                id="delete-password"
+                                                                name={
+                                                                    field.name
+                                                                }
+                                                                type={
+                                                                    isPasswordVisible
+                                                                        ? "text"
+                                                                        : "password"
+                                                                }
+                                                                autoComplete="current-password"
+                                                                placeholder={
+                                                                    localization
+                                                                        .auth
+                                                                        .passwordPlaceholder
+                                                                }
+                                                                value={
+                                                                    field.state
+                                                                        .value
+                                                                }
+                                                                onBlur={
+                                                                    field.handleBlur
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    field.handleChange(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    deleteUser.isPending
+                                                                }
+                                                                required
+                                                            />
+
+                                                            <InputGroupAddon align="inline-end">
+                                                                <InputGroupButton
+                                                                    size="icon-xs"
+                                                                    aria-label={
+                                                                        isPasswordVisible
+                                                                            ? localization
+                                                                                  .auth
+                                                                                  .hidePassword
+                                                                            : localization
+                                                                                  .auth
+                                                                                  .showPassword
+                                                                    }
+                                                                    title={
+                                                                        isPasswordVisible
+                                                                            ? localization
+                                                                                  .auth
+                                                                                  .hidePassword
+                                                                            : localization
+                                                                                  .auth
+                                                                                  .showPassword
+                                                                    }
+                                                                    onClick={() => {
+                                                                        setIsPasswordVisible(
+                                                                            (
+                                                                                visible
+                                                                            ) =>
+                                                                                !visible
+                                                                        )
+                                                                    }}
+                                                                >
+                                                                    {isPasswordVisible ? (
+                                                                        <EyeOff />
+                                                                    ) : (
+                                                                        <Eye />
+                                                                    )}
+                                                                </InputGroupButton>
+                                                            </InputGroupAddon>
+                                                        </InputGroup>
+
+                                                        <field.AuthFormFieldError />
+                                                    </Field>
+                                                )
+                                            }}
+                                        </form.AppField>
+                                    )}
+
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel
+                                            disabled={deleteUser.isPending}
+                                        >
+                                            {localization.settings.cancel}
+                                        </AlertDialogCancel>
+
+                                        <form.AuthFormSubmitButton
+                                            isPending={deleteUser.isPending}
+                                            variant="destructive"
+                                            disabled={deleteUser.isPending}
+                                        >
+                                            {
+                                                deleteUserLocalization.deleteAccount
+                                            }
+                                        </form.AuthFormSubmitButton>
+                                    </AlertDialogFooter>
+                                </form.AuthFormRoot>
+                            </form.AppForm>
+                        )}
+                    </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+    )
+}

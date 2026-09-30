@@ -1,25 +1,45 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
-import { useContext, useEffect, useRef } from "react"
+import { useAuth, useSignOut } from "@better-auth-ui/react"
+import { useEffect, useRef } from "react"
+import { cn } from "../../lib/utils"
+import { Spinner } from "../ui/spinner"
 
-import { useOnSuccessTransition } from "../../hooks/use-success-transition"
-import { AuthUIContext } from "../../lib/auth-ui-provider"
+export type SignOutProps = {
+    className?: string
+}
 
-export function SignOut({ redirectTo }: { redirectTo?: string }) {
-    const signingOut = useRef(false)
+/**
+ * Signs the current user out on mount and renders a centered spinner while the operation completes.
+ *
+ * @param className - Optional additional class names appended to the root element
+ * @returns The spinner shown during sign-out
+ */
+export function SignOut({ className }: SignOutProps) {
+    const { authClient, basePaths, navigate, viewPaths } = useAuth()
 
-    const { authClient, basePath, viewPaths } = useContext(AuthUIContext)
-    const { onSuccess } = useOnSuccessTransition({
-        redirectTo: redirectTo || `${basePath}/${viewPaths.SIGN_IN}`
+    const { mutate: signOut } = useSignOut(authClient, {
+        onError: () => {
+            navigate({
+                to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
+                replace: true
+            })
+        },
+        onSuccess: () =>
+            navigate({
+                to: `${basePaths.auth}/${viewPaths.auth.signIn}`,
+                replace: true
+            })
     })
 
+    const hasSignedOut = useRef(false)
+
     useEffect(() => {
-        if (signingOut.current) return
-        signingOut.current = true
+        if (hasSignedOut.current) return
+        hasSignedOut.current = true
 
-        authClient.signOut().finally(onSuccess)
-    }, [authClient, onSuccess])
+        signOut()
+    }, [signOut])
 
-    return <Loader2 className="animate-spin" />
+    return <Spinner className={cn("mx-auto my-auto", className)} />
 }

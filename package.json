@@ -1,8 +1,8 @@
 {
     "name": "@btst/better-auth-ui",
     "homepage": "https://www.better-stack.ai/",
-    "version": "2.0.1",
-    "description": "Plug & play shadcn/ui components for better-auth",
+    "version": "3.0.0",
+    "description": "Packaged Better Auth UI components and optional client plugins for BTST",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/better-stack-ai/better-auth-ui.git"
@@ -10,7 +10,7 @@
     "scripts": {
         "build": "tsup --clean --dts && cp src/style.css dist/style.css",
         "dev": "tsc-watch",
-        "prepublishOnly": "rm -rf dist && turbo build",
+        "prepublishOnly": "pnpm build",
         "lint": "biome check",
         "lint:fix": "biome check --write",
         "test": "vitest run",
@@ -18,69 +18,112 @@
         "typecheck": "tsc --noEmit"
     },
     "type": "module",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.js",
+    "main": "./dist/index.js",
     "exports": {
         "./css": "./dist/style.css",
         ".": {
-            "import": {
-                "types": "./dist/index.d.ts",
-                "default": "./dist/index.js"
-            },
-            "require": {
-                "types": "./dist/index.d.cts",
-                "default": "./dist/index.cjs"
-            }
-        },
-        "./server": {
-            "import": {
-                "types": "./dist/server.d.ts",
-                "default": "./dist/server.js"
-            },
-            "require": {
-                "types": "./dist/server.d.cts",
-                "default": "./dist/server.cjs"
-            }
-        },
-        "./tanstack": {
-            "import": {
-                "types": "./dist/tanstack.d.ts",
-                "default": "./dist/tanstack.js"
-            },
-            "require": {
-                "types": "./dist/tanstack.d.cts",
-                "default": "./dist/tanstack.cjs"
-            }
-        },
-        "./instantdb": {
-            "import": {
-                "types": "./dist/instantdb.d.ts",
-                "default": "./dist/instantdb.js"
-            },
-            "require": {
-                "types": "./dist/instantdb.d.cts",
-                "default": "./dist/instantdb.cjs"
-            }
-        },
-        "./triplit": {
-            "import": {
-                "types": "./dist/triplit.d.ts",
-                "default": "./dist/triplit.js"
-            },
-            "require": {
-                "types": "./dist/triplit.d.cts",
-                "default": "./dist/triplit.cjs"
-            }
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
         },
         "./client": {
-            "import": {
-                "types": "./dist/client.d.ts",
-                "default": "./dist/client.js"
-            },
-            "require": {
-                "types": "./dist/client.d.cts",
-                "default": "./dist/client.cjs"
-            }
+            "types": "./dist/client.d.ts",
+            "import": "./dist/client.js"
+        },
+        "./server": {
+            "types": "./dist/server.d.ts",
+            "import": "./dist/server.js"
+        },
+        "./plugins/admin": {
+            "types": "./dist/plugins/admin.d.ts",
+            "import": "./dist/plugins/admin.js"
+        },
+        "./plugins/agent-auth": {
+            "types": "./dist/plugins/agent-auth.d.ts",
+            "import": "./dist/plugins/agent-auth.js"
+        },
+        "./plugins/anonymous": {
+            "types": "./dist/plugins/anonymous.d.ts",
+            "import": "./dist/plugins/anonymous.js"
+        },
+        "./plugins/api-key": {
+            "types": "./dist/plugins/api-key.d.ts",
+            "import": "./dist/plugins/api-key.js"
+        },
+        "./plugins/billing": {
+            "types": "./dist/plugins/billing.d.ts",
+            "import": "./dist/plugins/billing.js"
+        },
+        "./plugins/dash": {
+            "types": "./dist/plugins/dash.d.ts",
+            "import": "./dist/plugins/dash.js"
+        },
+        "./plugins/delete-user": {
+            "types": "./dist/plugins/delete-user.d.ts",
+            "import": "./dist/plugins/delete-user.js"
+        },
+        "./plugins/device-authorization": {
+            "types": "./dist/plugins/device-authorization.d.ts",
+            "import": "./dist/plugins/device-authorization.js"
+        },
+        "./plugins/email-otp": {
+            "types": "./dist/plugins/email-otp.d.ts",
+            "import": "./dist/plugins/email-otp.js"
+        },
+        "./plugins/last-login-method": {
+            "types": "./dist/plugins/last-login-method.d.ts",
+            "import": "./dist/plugins/last-login-method.js"
+        },
+        "./plugins/magic-link": {
+            "types": "./dist/plugins/magic-link.d.ts",
+            "import": "./dist/plugins/magic-link.js"
+        },
+        "./plugins/multi-session": {
+            "types": "./dist/plugins/multi-session.d.ts",
+            "import": "./dist/plugins/multi-session.js"
+        },
+        "./plugins/oauth-provider": {
+            "types": "./dist/plugins/oauth-provider.d.ts",
+            "import": "./dist/plugins/oauth-provider.js"
+        },
+        "./plugins/organization": {
+            "types": "./dist/plugins/organization.d.ts",
+            "import": "./dist/plugins/organization.js"
+        },
+        "./plugins/passkey": {
+            "types": "./dist/plugins/passkey.d.ts",
+            "import": "./dist/plugins/passkey.js"
+        },
+        "./plugins/phone-number": {
+            "types": "./dist/plugins/phone-number.d.ts",
+            "import": "./dist/plugins/phone-number.js"
+        },
+        "./plugins/siwe": {
+            "types": "./dist/plugins/siwe.d.ts",
+            "import": "./dist/plugins/siwe.js"
+        },
+        "./plugins/sso": {
+            "types": "./dist/plugins/sso.d.ts",
+            "import": "./dist/plugins/sso.js"
+        },
+        "./plugins/theme": {
+            "types": "./dist/plugins/theme.d.ts",
+            "import": "./dist/plugins/theme.js"
+        },
+        "./plugins/two-factor": {
+            "types": "./dist/plugins/two-factor.d.ts",
+            "import": "./dist/plugins/two-factor.js"
+        },
+        "./plugins/username": {
+            "types": "./dist/plugins/username.d.ts",
+            "import": "./dist/plugins/username.js"
+        },
+        "./plugins/captcha": {
+            "types": "./dist/plugins/captcha.d.ts",
+            "import": "./dist/plugins/captcha.js"
+        },
+        "./plugins/one-tap": {
+            "types": "./dist/plugins/one-tap.d.ts",
+            "import": "./dist/plugins/one-tap.js"
         }
     },
     "files": [
@@ -97,113 +140,103 @@
     "author": "daveycodez",
     "license": "MIT",
     "devDependencies": {
-        "@better-auth/api-key": "1.6.16",
-        "@better-auth/core": "1.6.16",
-        "@better-auth/passkey": "1.6.16",
-        "@better-auth/utils": "0.4.1",
-        "@better-fetch/fetch": "1.2.2",
+        "@better-auth/agent-auth": "0.6.2",
+        "@better-auth/api-key": "1.7.6",
+        "@better-auth/core": "1.7.6",
+        "@better-auth/infra": "0.4.5",
+        "@better-auth/oauth-provider": "1.7.6",
+        "@better-auth/passkey": "1.7.6",
+        "@better-auth/sso": "1.7.6",
+        "@better-auth/stripe": "1.7.6",
+        "@better-fetch/fetch": "1.3.2",
         "@biomejs/biome": "2.4.16",
-        "@btst/stack": "3.0.0",
+        "@btst/stack": "3.1.2",
         "@btst/yar": "1.3.2",
-        "@radix-ui/react-checkbox": "^1.3.3",
-        "@radix-ui/react-context": "^1.1.3",
-        "@radix-ui/react-dialog": "^1.1.15",
-        "@radix-ui/react-label": "^2.1.8",
-        "@radix-ui/react-primitive": "^2.1.4",
-        "@radix-ui/react-separator": "^1.1.8",
-        "@radix-ui/react-slot": "^1.2.4",
-        "@radix-ui/react-tabs": "^1.1.13",
-        "@radix-ui/react-use-callback-ref": "^1.1.1",
-        "@radix-ui/react-use-layout-effect": "^1.1.1",
-        "@tanstack/react-query": "^5.100.14",
+        "@tanstack/query-core": "5.101.2",
+        "@tanstack/react-query": "5.101.2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
         "@types/node": "^25.5.0",
         "@types/react": "^19.2.15",
         "@types/react-dom": "^19.2.3",
-        "@types/react-google-recaptcha": "^2.1.9",
-        "better-auth": "1.6.16",
-        "better-call": "1.3.6",
-        "class-variance-authority": "^0.7.1",
-        "clsx": "^2.1.1",
+        "better-auth": "1.7.6",
+        "better-call": "1.4.0",
         "esbuild-plugin-preserve-directives": "^0.0.11",
         "happy-dom": "^20.8.3",
-        "lucide-react": "^1.0.1",
-        "tailwind-merge": "^3.5.0",
-        "tailwindcss-animate": "^1.0.7",
+        "react": "19.2.6",
+        "react-dom": "19.2.6",
+        "react-email": "6.6.8",
+        "tailwindcss": "4.3.2",
         "tsc-watch": "^7.2.0",
         "tsup": "^8.5.1",
         "tsx": "^4.21.0",
         "turbo": "^2.8.20",
         "typescript": "^6.0.2",
-        "vitest": "^4.1.7",
-        "zod": "^4.4.3"
+        "vitest": "^4.1.7"
     },
     "peerDependencies": {
-        "@better-auth/api-key": "1.6.16",
-        "@better-auth/passkey": "1.6.16",
-        "@better-fetch/fetch": "1.2.2",
-        "@btst/stack": "^3.0.0 || ^3.1.0-0",
+        "@better-auth/agent-auth": "0.6.2",
+        "@better-auth/api-key": "1.7.6",
+        "@better-auth/infra": "0.4.5",
+        "@better-auth/oauth-provider": "1.7.6",
+        "@better-auth/passkey": "1.7.6",
+        "@better-auth/sso": "1.7.6",
+        "@better-auth/stripe": "1.7.6",
+        "@btst/stack": "^4.0.0",
         "@btst/yar": "^1.3.2",
-        "@captchafox/react": "^1.10.0",
-        "@daveyplate/better-auth-tanstack": "^1.3.6",
-        "@hookform/resolvers": ">=5.2.0",
-        "@instantdb/react": ">=0.18.0",
-        "@marsidev/react-turnstile": ">=1.1.0",
-        "@radix-ui/react-avatar": ">=1.1.0",
-        "@radix-ui/react-checkbox": ">=1.1.0",
-        "@radix-ui/react-context": ">=1.1.0",
-        "@radix-ui/react-dialog": ">=1.1.0",
-        "@radix-ui/react-dropdown-menu": ">=2.1.0",
-        "@radix-ui/react-label": ">=2.1.0",
-        "@radix-ui/react-primitive": ">=2.0.0",
-        "@radix-ui/react-select": ">=2.2.0",
-        "@radix-ui/react-separator": ">=1.1.0",
-        "@radix-ui/react-slot": ">=1.1.0",
-        "@radix-ui/react-tabs": ">=1.1.0",
-        "@radix-ui/react-tooltip": ">=1.2.0",
-        "@radix-ui/react-use-callback-ref": ">=1.1.0",
-        "@radix-ui/react-use-layout-effect": ">=1.1.0",
-        "@tanstack/react-query": ">=5.100.14",
-        "@triplit/client": ">=1.0.0",
-        "@triplit/react": ">=1.0.0",
-        "better-auth": "1.6.16",
-        "class-variance-authority": ">=0.7.0",
-        "clsx": ">=2.1.0",
-        "input-otp": ">=1.4.0",
-        "lucide-react": ">=0.469.0",
-        "react": ">=18.0.0",
-        "react-dom": ">=18.0.0",
-        "react-hook-form": ">=7.55.0",
-        "sonner": ">=1.7.0",
-        "tailwind-merge": ">=3.5.0",
-        "tailwindcss": ">=3.0.0",
-        "zod": ">=4.4.3"
+        "@tanstack/query-core": ">=5.101.2",
+        "@tanstack/react-query": ">=5.101.2",
+        "better-auth": "1.7.6",
+        "react": ">=19.2.6",
+        "react-dom": ">=19.2.6",
+        "react-email": ">=6.0.0",
+        "tailwindcss": ">=4.3.2"
     },
     "peerDependenciesMeta": {
-        "@daveyplate/better-auth-tanstack": {
+        "react-email": {
             "optional": true
         },
-        "@instantdb/react": {
+        "@better-auth/agent-auth": {
             "optional": true
         },
-        "@triplit/client": {
+        "@better-auth/oauth-provider": {
             "optional": true
         },
-        "@triplit/react": {
+        "@better-auth/infra": {
+            "optional": true
+        },
+        "@better-auth/sso": {
+            "optional": true
+        },
+        "@better-auth/stripe": {
             "optional": true
         }
     },
     "dependencies": {
-        "@hcaptcha/react-hcaptcha": "^2.0.2",
-        "@noble/hashes": "^2.0.1",
-        "@react-email/components": "^1.0.12",
-        "@wojtekmaj/react-recaptcha-v3": "^0.1.4",
+        "@base-ui/react": "^1.4.2",
+        "@better-auth-ui/core": "1.7.26",
+        "@better-auth-ui/react": "1.7.26",
+        "@tanstack/react-form": "^1.33.5",
+        "@tanstack/react-pacer": "^0.23.0",
+        "@tanstack/react-store": "^0.11.1",
+        "@tanstack/react-table": "^9.2.4",
         "bowser": "^2.11.0",
-        "react-google-recaptcha": "^3.1.0",
-        "react-qr-code": "^2.0.18",
-        "vaul": "^1.1.2"
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "date-fns": "^4.3.0",
+        "input-otp": "^1.4.2",
+        "libphonenumber-js": "^1.13.14",
+        "lucide-react": "^1.29.0",
+        "radix-ui": "^1.6.1",
+        "react-day-picker": "^10.0.1",
+        "sonner": "^2.0.7",
+        "tailwind-merge": "^3.5.0",
+        "zod": "^4.4.3"
     },
     "packageManager": "pnpm@10.26.2",
-    "overrides": {}
+    "overrides": {},
+    "types": "./dist/index.d.ts",
+    "sideEffects": [
+        "**/*.css"
+    ]
 }
