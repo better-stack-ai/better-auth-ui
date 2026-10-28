@@ -246,7 +246,7 @@ describe("packaged upstream behavior with native Better Auth requests", () => {
             "/auth/oauth-consent?client_id=app1&scope=openid%20email&consent_code=consent1"
         )
         const f = fixture({
-            "/oauth2/public-client": {
+            "/oauth2/public-client-prelogin": {
                 client_id: "app1",
                 client_name: "Example Client"
             },

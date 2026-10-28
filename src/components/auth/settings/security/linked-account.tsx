@@ -2,11 +2,13 @@
 
 import {
     type AuthSocialProvider,
+    getAuthCallbackURL,
     getAuthErrorMessage,
     getProviderId,
     getProviderName,
     isReauthenticationRequiredError
 } from "@better-auth-ui/core"
+
 import {
     renderProviderIcon,
     useAccountInfo,
@@ -161,7 +163,10 @@ export function LinkedAccount({
                             onClick={() =>
                                 linkSocial({
                                     provider: providerId,
-                                    callbackURL: `${baseURL}${window.location.pathname}`
+                                    callbackURL: getAuthCallbackURL(
+                                        baseURL,
+                                        window.location.pathname
+                                    )
                                 })
                             }
                             disabled={isLinking}
