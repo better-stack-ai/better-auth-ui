@@ -347,7 +347,7 @@ function EditSsoProviderDialog({
                           }
                       }
                     : {})
-            } as UpdateSsoProviderParams
+            } satisfies UpdateSsoProviderParams
 
             try {
                 await update.mutateAsync(params)

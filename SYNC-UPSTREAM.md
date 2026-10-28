@@ -54,6 +54,8 @@ and signed OAuth consent regression tests are preserved under
      receives its required `cn` peer as a dependency.
    - Scrollable permission regions use semantic sections and remain keyboard
      focusable; preserve their accessibility behavior.
+   - The SSO editor validates its inferred request with `satisfies` instead of
+     widening it to the full fetch-options type, which keeps Auth 1.7.14 compatible.
    - Package branding, ESM exports, generated plugin subpaths, Tailwind source CSS,
      and dependency placement belong to this fork.
 5. Compare every registry item and enabled view/tab with the packaged exports and
