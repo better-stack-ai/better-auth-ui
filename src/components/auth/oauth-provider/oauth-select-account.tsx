@@ -16,7 +16,7 @@ import {
     useOAuthContinue,
     usePublicOAuthClient
 } from "@better-auth-ui/react/plugins/oauth-provider"
-import { ShieldCheck } from "lucide-react"
+import { ChevronRight, ShieldCheck } from "lucide-react"
 import { useEffect, useState } from "react"
 import { oauthProviderPlugin } from "../../../lib/auth/oauth-provider-plugin"
 import { cn } from "../../../lib/utils"
@@ -30,15 +30,6 @@ import {
     CardHeader,
     CardTitle
 } from "../../ui/card"
-import {
-    Item,
-    ItemActions,
-    ItemContent,
-    ItemDescription,
-    ItemGroup,
-    ItemMedia,
-    ItemTitle
-} from "../../ui/item"
 import { Skeleton } from "../../ui/skeleton"
 import { Spinner } from "../../ui/spinner"
 import { UserAvatar } from "../user/user-avatar"
@@ -134,40 +125,38 @@ export function OAuthSelectAccount({ className }: OAuthSelectAccountProps) {
     const isBusy = pendingSessionId !== undefined
 
     return (
-        <Card className={cn("w-full max-w-md", className)}>
-            <CardHeader className="gap-4">
-                <div className="flex items-center gap-3">
+        <Card
+            className={cn(
+                "max-h-[calc(100dvh-2rem)] w-full max-w-lg gap-0 overflow-y-auto py-0",
+                className
+            )}
+        >
+            <CardHeader className="grid justify-items-center gap-5 p-6 text-center">
+                <div className="grid justify-items-center gap-3">
                     {client ? (
-                        <Avatar size="lg">
+                        <Avatar className="size-16">
                             <AvatarImage
                                 alt={clientName}
                                 referrerPolicy="no-referrer"
                                 src={logoUrl}
                             />
                             <AvatarFallback>
-                                <ShieldCheck className="size-5" />
+                                <ShieldCheck className="size-7" />
                             </AvatarFallback>
                         </Avatar>
                     ) : (
-                        <Skeleton className="size-10 rounded-full" />
+                        <Skeleton className="size-16 rounded-full" />
                     )}
-
-                    <div className="min-w-0 flex-1">
-                        {client ? (
-                            <p className="truncate font-medium">{clientName}</p>
-                        ) : (
-                            <Skeleton className="h-4 w-36" />
-                        )}
-                        {client?.client_uri ? (
-                            <p className="truncate text-muted-foreground text-xs">
-                                {client.client_uri}
-                            </p>
-                        ) : null}
-                    </div>
+                    {client ? (
+                        <p className="max-w-full break-words font-medium text-base">
+                            {clientName}
+                        </p>
+                    ) : (
+                        <Skeleton className="h-5 w-36" />
+                    )}
                 </div>
-
                 <div className="grid gap-1">
-                    <CardTitle className="text-xl">
+                    <CardTitle className="font-semibold text-xl">
                         {localization.selectAccount}
                     </CardTitle>
                     <CardDescription>
@@ -178,26 +167,21 @@ export function OAuthSelectAccount({ className }: OAuthSelectAccountProps) {
                     </CardDescription>
                 </div>
             </CardHeader>
-
-            <CardContent>
+            <CardContent className="px-4 pb-6 sm:px-6">
                 {isDeviceSessionsPending ? (
-                    <ItemGroup>
-                        <Item variant="outline">
-                            <ItemMedia>
-                                <UserAvatar isPending />
-                            </ItemMedia>
-                            <ItemContent>
-                                <Skeleton className="h-4 w-28" />
-                                <Skeleton className="h-3 w-40" />
-                            </ItemContent>
-                        </Item>
-                    </ItemGroup>
+                    <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-4">
+                        <UserAvatar isPending />
+                        <div className="grid flex-1 gap-2">
+                            <Skeleton className="h-4 w-28" />
+                            <Skeleton className="h-3 w-40" />
+                        </div>
+                    </div>
                 ) : !deviceSessions?.length ? (
-                    <div className="flex flex-col items-center gap-1 py-6 text-center">
+                    <div className="grid justify-items-center gap-1 py-6 text-center">
                         <p className="font-semibold text-sm">
                             {localization.noAccounts}
                         </p>
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-muted-foreground text-sm">
                             {interpolateClient(
                                 localization.noAccountsDescription,
                                 clientName
@@ -205,57 +189,63 @@ export function OAuthSelectAccount({ className }: OAuthSelectAccountProps) {
                         </p>
                     </div>
                 ) : (
-                    <ItemGroup className="gap-2">
+                    <ul className="divide-y divide-border overflow-hidden rounded-lg bg-muted/50">
                         {deviceSessions.map((deviceSession) => {
                             const isCurrent =
                                 deviceSession.session.id === session?.session.id
                             const isSelecting =
                                 pendingSessionId === deviceSession.session.id
-
                             return (
-                                <Item
-                                    key={deviceSession.session.id}
-                                    variant="outline"
-                                >
-                                    <ItemMedia>
-                                        <UserAvatar user={deviceSession.user} />
-                                    </ItemMedia>
-
-                                    <ItemContent>
-                                        <ItemTitle className="truncate">
-                                            {deviceSession.user.name ||
-                                                deviceSession.user.email}
-                                        </ItemTitle>
-                                        {deviceSession.user.name ? (
-                                            <ItemDescription className="truncate">
-                                                {deviceSession.user.email}
-                                            </ItemDescription>
-                                        ) : null}
-                                    </ItemContent>
-
-                                    <ItemActions>
-                                        {isCurrent && (
-                                            <Badge variant="secondary">
+                                <li key={deviceSession.session.id}>
+                                    <Button
+                                        className="h-auto min-h-20 w-full justify-start gap-3 whitespace-normal rounded-none p-4 text-left"
+                                        variant="ghost"
+                                        disabled={
+                                            isBusy ||
+                                            !client ||
+                                            isSessionPending
+                                        }
+                                        aria-label={`${localization.continue}: ${deviceSession.user.name || deviceSession.user.email} (${deviceSession.user.email})`}
+                                        onClick={() =>
+                                            selectAccount(deviceSession)
+                                        }
+                                    >
+                                        <UserAvatar
+                                            className="size-10 shrink-0"
+                                            user={deviceSession.user}
+                                        />
+                                        <span className="grid min-w-0 flex-1 gap-0.5">
+                                            <span className="break-words font-medium text-base">
+                                                {deviceSession.user.name ||
+                                                    deviceSession.user.email}
+                                            </span>
+                                            {deviceSession.user.name ? (
+                                                <span className="break-all text-muted-foreground text-sm">
+                                                    {deviceSession.user.email}
+                                                </span>
+                                            ) : null}
+                                        </span>
+                                        {isCurrent ? (
+                                            <Badge
+                                                className="shrink-0"
+                                                variant="secondary"
+                                            >
                                                 {localization.currentAccount}
                                             </Badge>
+                                        ) : null}
+                                        {isSelecting ? (
+                                            <Spinner />
+                                        ) : (
+                                            <ChevronRight
+                                                aria-hidden="true"
+                                                className="size-4 shrink-0 text-muted-foreground"
+                                            />
                                         )}
-
-                                        <Button
-                                            size="sm"
-                                            disabled={isBusy}
-                                            onClick={() =>
-                                                selectAccount(deviceSession)
-                                            }
-                                        >
-                                            {isSelecting && <Spinner />}
-
-                                            {localization.continue}
-                                        </Button>
-                                    </ItemActions>
-                                </Item>
+                                    </Button>
+                                </li>
                             )
                         })}
-                    </ItemGroup>
+                    </ul>
                 )}
             </CardContent>
         </Card>

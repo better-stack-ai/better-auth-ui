@@ -77,3 +77,14 @@ application's browser provider, so the server-side plugin factory cannot know th
 configured URLs. Add public authentication URLs to the application's sitemap if
 needed, using the same path configuration. Private settings and administration
 pages remain excluded and carry `noindex` metadata.
+
+## 3.0.2: upstream 1.7.32 and the patched Auth cohort
+
+This patch syncs all packaged React/shadcn source directories to upstream stable
+1.7.32 and pins the matching core/React runtimes. Recovery flows honor plugin
+options and preserve return destinations; approval and security components include
+the current upstream behavior. BTST provider, localization, notification, and
+server-rendering safeguards remain in place.
+
+Stack 4/Auth 1.7.6 consumers remain supported. Stack 5 consumers use the coordinated
+Auth 1.7.14 and DB 3.0.1 cohort described in the installation guide.

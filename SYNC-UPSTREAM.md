@@ -2,15 +2,18 @@
 
 ## Pinned source
 
-Version 3.0.0 packages the React/shadcn source at upstream tag `v1.7.26`, commit
-`3bb3f04d033fc10c3d825776d9624b01422df98b` in
+Version 3.0.2 packages the React/shadcn source at upstream tag `v1.7.32`, commit
+`25c6b5e3a8b6b1e35153bd164d0d109b194c4eb3` in
 https://github.com/better-auth-ui/better-auth-ui. `@better-auth-ui/core` and
-`@better-auth-ui/react` are exact 1.7.26 runtime dependencies. Better Auth is aligned
-to 1.7.6 across the BTST DB, Stack, and UI release cohort.
+`@better-auth-ui/react` are exact 1.7.32 runtime dependencies. Better Auth is aligned
+to the coordinated 1.7.14 BTST DB/Stack cohort; the existing 1.7.6 and Stack 4
+consumer profile remains supported. Development tests retain that existing profile
+and the coordinated release gate checks Stack 5/Auth 1.7.14.
 
 `upstream-registry.json` records the matching registry inventory. Source is from
 `examples/start-shadcn-example/src/components/auth`, `components/ui`, and `lib/auth`.
-The two upstream shadcn form/profile regression test files are preserved under
+The upstream shadcn form/profile, recovery-option, sign-up redirect, active-session,
+and signed OAuth consent regression tests are preserved under
 `src/lib/__tests__`, with package-relative imports.
 
 ## Update procedure
@@ -46,7 +49,13 @@ The two upstream shadcn form/profile regression test files are preserved under
      locale and BTST translations resolve; preserve native localization resolvers.
    - Agent approval waits for hydration before reading query parameters, so a
      valid approval URL has the same initial server and client markup.
-   - `src/lib/utils.ts` uses the existing clsx/tailwind-merge primitives.
+   - `src/lib/utils.ts` uses the existing clsx/tailwind-merge primitives. Upstream
+     `cn` imports are mapped to this helper; the published React runtime still
+     receives its required `cn` peer as a dependency.
+   - Scrollable permission regions use semantic sections and remain keyboard
+     focusable; preserve their accessibility behavior.
+   - The SSO editor validates its inferred request with `satisfies` instead of
+     widening it to the full fetch-options type, which keeps Auth 1.7.14 compatible.
    - Package branding, ESM exports, generated plugin subpaths, Tailwind source CSS,
      and dependency placement belong to this fork.
 5. Compare every registry item and enabled view/tab with the packaged exports and

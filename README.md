@@ -1,8 +1,8 @@
 # Better Auth UI for BTST
 
 `@btst/better-auth-ui` packages Better Auth UI's React/shadcn components as optional
-BTST client plugins. Version 3 tracks upstream **1.7.26**, supports **BTST 4**, and
-aligns with **Better Auth 1.7.6**, **React 19.2.6+**, and **Tailwind 4.3.2+**.
+BTST client plugins. Version 3 tracks upstream **1.7.32**, supports **BTST 4 and 5**, and
+supports the **Better Auth 1.7.6 and 1.7.14** cohorts, **React 19.2.6+**, and **Tailwind 4.3.2+**.
 
 Applications keep ownership of their native Better Auth server/client configuration,
 provider credentials, and authorization. BTST supplies routes, framework navigation,
@@ -30,3 +30,13 @@ pnpm --dir docs build
 ```
 
 [SYNC-UPSTREAM.md](SYNC-UPSTREAM.md) records source provenance and the update procedure.
+
+Version 3.0.2 adds compatibility with Stack 5 and the patched Auth 1.7.14 cohort,
+while retaining Stack 4/Auth 1.7.6 consumers. New integrations should use Auth,
+API-key/passkey, and other selected Auth plugins at 1.7.14 together. Install core
+1.7.14, utils 0.5.1, fetch 1.3.3, and better-call 1.4.4 alongside the patched DB
+3.0.1 cohort. The published upstream UI dependencies already support Auth 1.7+;
+this release also imports the complete upstream 1.7.32 packaged source changes,
+including recovery-flow plugin options, preserved redirects, and updated OAuth,
+agent approval, invitation, and security settings components. BTST provider and
+notification integration and hydration protections are retained.

@@ -1,5 +1,7 @@
 "use client"
 
+import { getAuthCallbackURL } from "@better-auth-ui/core"
+
 import { useAuth, useSendVerificationEmail } from "@better-auth-ui/react"
 import { useEffect, useState } from "react"
 import { useAuthNotifications } from "../../lib/notifications"
@@ -98,7 +100,10 @@ export function VerifyEmail({ className }: VerifyEmailProps) {
                                 onClick={() =>
                                     sendVerificationEmail({
                                         email,
-                                        callbackURL: `${baseURL}${redirectTo}`
+                                        callbackURL: getAuthCallbackURL(
+                                            baseURL,
+                                            redirectTo
+                                        )
                                     })
                                 }
                             >
