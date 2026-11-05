@@ -1,7 +1,7 @@
 # Better Auth UI for BTST
 
 `@btst/better-auth-ui` packages Better Auth UI's React/shadcn components as optional
-BTST client plugins. Version 3.0.3 tracks upstream **1.7.32**, supports **BTST 4, 5 and 6**, and
+BTST client plugins. Version 3.0.3-beta.0 tracks upstream **1.7.32**, supports **BTST 4, 5 and the Core 6 beta**, and
 supports the **Better Auth 1.7.6 and 1.7.14** cohorts, **React 19.2.6+**, and **Tailwind 4.3.2+**.
 
 Applications keep ownership of their native Better Auth server/client configuration,
