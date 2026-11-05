@@ -1,7 +1,7 @@
 {
     "name": "@btst/better-auth-ui",
     "homepage": "https://www.better-stack.ai/",
-    "version": "3.0.2",
+    "version": "3.0.3",
     "description": "Packaged Better Auth UI components and optional client plugins for BTST",
     "repository": {
         "type": "git",
@@ -183,7 +183,7 @@
         "@better-auth/passkey": "1.7.6 || 1.7.14",
         "@better-auth/sso": "1.7.6 || 1.7.14",
         "@better-auth/stripe": "1.7.6 || 1.7.14",
-        "@btst/stack": "^4.0.0 || ^5.0.0",
+        "@btst/stack": "^4.0.0 || ^5.0.0 || ^6.0.0",
         "@btst/yar": "^1.3.2",
         "@tanstack/query-core": ">=5.101.2",
         "@tanstack/react-query": ">=5.101.2",
