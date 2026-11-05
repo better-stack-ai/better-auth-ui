@@ -78,6 +78,13 @@ configured URLs. Add public authentication URLs to the application's sitemap if
 needed, using the same path configuration. Private settings and administration
 pages remain excluded and carry `noindex` metadata.
 
+## 3.0.3: Stack 6 compatibility
+
+Use `@btst/better-auth-ui@3.0.3` with Stack 6. The companion continues to use
+Stack's public client-plugin, component and context contracts; it does not depend
+on the extracted feature packages. Stack 4 and 5 remain supported. The Better
+Auth dependency cohort and application-owned auth configuration are unchanged.
+
 ## 3.0.2: upstream 1.7.32 and the patched Auth cohort
 
 This patch syncs all packaged React/shadcn source directories to upstream stable
